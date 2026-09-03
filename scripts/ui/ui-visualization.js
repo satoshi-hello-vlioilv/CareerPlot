@@ -1979,6 +1979,16 @@ class AppUICharts {
         return flagBadge;
     }
 
+    /**
+     * 社員のメイン表示用写真を取得する
+     * @param {Object} employee 社員データ
+     * @returns {Object|null} 表示対象の写真オブジェクト（無ければnull）
+     */
+    getDisplayPhoto(employee) {
+        if (!employee || !Array.isArray(employee.photos) || employee.photos.length === 0) return null;
+        return employee.photos.find(p => p.id === employee.displayPhotoId) || employee.photos[0];
+    }
+
     // 社員カード作成メソッドの修正（バッジデザイン統一対応）
     createEmployeeCard(container, employee, displayOptions) {
         const card = document.createElement('div');
@@ -2006,19 +2016,22 @@ class AppUICharts {
         card.style.lineHeight = '1.3';
         card.style.border = '1px solid var(--border-color)';
 
-        // --- 顔写真の表示 ---
-        if (employee.photos && employee.photos.length > 0) {
-            const displayPhoto = employee.photos.find(p => p.id === (employee.displayPhotoId || employee.photos[0].id)) || employee.photos[0];
-            const img = document.createElement('img');
-            img.className = 'employee-card-photo';
-            img.src = displayPhoto.dataUrl;
-            card.appendChild(img);
-        } else {
-            // デフォルトアイコン表示
-            const iconDiv = document.createElement('div');
-            iconDiv.className = 'employee-card-photo-placeholder';
-            iconDiv.innerHTML = '<i class="fas fa-user"></i>';
-            card.appendChild(iconDiv);
+        // --- 顔写真の表示（表示オプションで切替可能。未指定時は従来通り表示） ---
+        const showPhoto = displayOptions.showPhoto !== false;
+        if (showPhoto) {
+            const displayPhoto = this.getDisplayPhoto(employee);
+            if (displayPhoto) {
+                const img = document.createElement('img');
+                img.className = 'employee-card-photo';
+                img.src = displayPhoto.dataUrl;
+                card.appendChild(img);
+            } else {
+                // デフォルトアイコン表示
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'employee-card-photo-placeholder';
+                iconDiv.innerHTML = '<i class="fas fa-user"></i>';
+                card.appendChild(iconDiv);
+            }
         }
 
         // --- コンテンツコンテナ ---
@@ -2156,8 +2169,8 @@ class AppUICharts {
             const currentAge = isNaN(birthYear) ? 'N/A' : currentYear - birthYear;
             
             let photoHtml = '';
-            if (employee.photos && employee.photos.length > 0) {
-                const displayPhoto = employee.photos.find(p => p.id === (employee.displayPhotoId || employee.photos[0].id)) || employee.photos[0];
+            const displayPhoto = this.getDisplayPhoto(employee);
+            if (displayPhoto) {
                 photoHtml = `<div style="text-align: center; margin-bottom: 10px;"><img src="${displayPhoto.dataUrl}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--main-primary-light); background-color: var(--base-light);"></div>`;
             }
             

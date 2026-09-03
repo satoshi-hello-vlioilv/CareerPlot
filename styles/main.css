@@ -1099,6 +1099,29 @@ header h1 i {
     transform: translateY(-1px);
 }
 
+/* Ctrl+V 貼り付け登録の案内（操作を「思い出させない」ための常設ヒント） */
+.employee-photo-hint {
+    margin-top: var(--spacing-xs);
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted, var(--base-dark-gray));
+    line-height: 1.4;
+}
+
+.employee-photo-hint kbd {
+    display: inline-block;
+    padding: 1px 4px;
+    margin: 0 1px;
+    border: 1px solid var(--border-color);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    background-color: var(--base-light, #fff);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 0.95em;
+    line-height: 1.2;
+}
+
 /* 従業員カードのフレックス化（画像対応） */
 .employee-card {
     display: flex !important;

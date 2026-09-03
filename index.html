@@ -318,6 +318,10 @@
                 <!-- 表示項目チェックボックス (共通) -->
                 <div class="toolbar-section">
                     <div class="checkbox-item compact">
+                        <input type="checkbox" id="showPhoto" checked>
+                        <label for="showPhoto" title="カード内に顔写真を表示">写真</label>
+                    </div>
+                    <div class="checkbox-item compact">
                         <input type="checkbox" id="showGrade" checked>
                         <label for="showGrade" title="チャート/配置でグレードを表示">グレード</label>
                     </div>
@@ -1094,6 +1098,7 @@
                                 <i class="fas fa-camera"></i> 写真を追加
                                 <input type="file" id="employeePhotoInput" accept="image/jpeg, image/png, image/webp" multiple style="display:none;">
                             </label>
+                            <p class="employee-photo-hint"><i class="fas fa-paste"></i> <kbd>Ctrl</kbd>+<kbd>V</kbd> で貼り付け登録</p>
                             <p class="text-xs text-muted text-center" style="margin-top: 4px; line-height: 1.2;">※顔をクリックで<br>メイン画像に設定</p>
                         </div>
                         

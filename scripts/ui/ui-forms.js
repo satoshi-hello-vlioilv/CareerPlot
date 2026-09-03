@@ -19,6 +19,7 @@ class UIForms {
         this.currentEmployeePhotos =[];
         this.currentDisplayPhotoId = null;
         this._photoUploadListener = null;
+        this._photoPasteListener = null;
     }
 
     /**
@@ -126,7 +127,42 @@ class UIForms {
     }
 
     /**
-     * 画像アップロードのイベントリスナー設定
+     * 画像ファイル群を顔写真として登録する（ファイル選択・貼り付け共通処理）
+     * @param {FileList|File[]} files 追加する画像ファイル
+     * @returns {Promise<number>} 実際に追加できた枚数
+     */
+    async addPhotoFiles(files) {
+        if (!files || files.length === 0) return 0;
+        let addedCount = 0;
+
+        for (const file of Array.from(files)) {
+            if (!file || !file.type || !file.type.startsWith('image/')) continue;
+
+            try {
+                const dataUrl = await this.processImageFile(file);
+                const newPhotoId = 'photo_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                this.currentEmployeePhotos.push({
+                    id: newPhotoId,
+                    dataUrl: dataUrl
+                });
+                // 最初に追加されたものをメインに設定
+                if (this.currentEmployeePhotos.length === 1) {
+                    this.currentDisplayPhotoId = newPhotoId;
+                }
+                addedCount++;
+            } catch (err) {
+                console.error('Image processing error:', err);
+            }
+        }
+
+        if (addedCount > 0) {
+            this.renderPhotoThumbnails();
+        }
+        return addedCount;
+    }
+
+    /**
+     * 画像アップロードのイベントリスナー設定（ファイル選択 + Ctrl+V 貼り付け）
      */
     setupPhotoUploadEvents() {
         const fileInput = document.getElementById('employeePhotoInput');
@@ -137,32 +173,46 @@ class UIForms {
         fileInput.parentNode.replaceChild(newFileInput, fileInput);
 
         newFileInput.addEventListener('change', async (e) => {
-            const files = e.target.files;
-            if (!files || files.length === 0) return;
-
-            // 複数画像の処理
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (!file.type.startsWith('image/')) continue;
-                
-                try {
-                    const dataUrl = await this.processImageFile(file);
-                    const newPhotoId = 'photo_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-                    this.currentEmployeePhotos.push({
-                        id: newPhotoId,
-                        dataUrl: dataUrl
-                    });
-                    // 最初に追加されたものをメインに設定
-                    if (this.currentEmployeePhotos.length === 1) {
-                        this.currentDisplayPhotoId = newPhotoId;
-                    }
-                } catch (err) {
-                    console.error('Image processing error:', err);
-                }
-            }
-            this.renderPhotoThumbnails();
+            await this.addPhotoFiles(e.target.files);
             newFileInput.value = ''; // 選択状態をリセット
         });
+
+        this.setupPhotoPasteEvent();
+    }
+
+    /**
+     * Ctrl+V（クリップボード貼り付け）による顔写真登録
+     * 社員モーダル表示中のみ有効。リスナーは一度だけ登録して重複を防ぐ。
+     */
+    setupPhotoPasteEvent() {
+        if (this._photoPasteListener) return;
+
+        this._photoPasteListener = async (e) => {
+            // 社員追加/編集モーダルが開いているときだけ処理する
+            const modal = document.getElementById('employeeModal');
+            if (!modal || !modal.classList.contains('visible')) return;
+
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            // クリップボード内の画像のみを抽出（テキスト貼り付けは通常動作を維持）
+            const imageFiles = Array.from(clipboardData.items || [])
+                .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+                .map(item => item.getAsFile())
+                .filter(Boolean);
+
+            if (imageFiles.length === 0) return;
+
+            e.preventDefault();
+            const addedCount = await this.addPhotoFiles(imageFiles);
+            if (addedCount > 0) {
+                this.uiManager.showNotification('success', '写真を登録しました', `クリップボードから${addedCount}枚の画像を追加しました。`);
+            } else {
+                this.uiManager.showNotification('error', '写真の登録に失敗', '貼り付けた画像を読み込めませんでした。');
+            }
+        };
+
+        document.addEventListener('paste', this._photoPasteListener);
     }
 
     // ----------------------

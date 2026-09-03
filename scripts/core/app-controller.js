@@ -38,6 +38,7 @@ class AppController {
             chartType: 'grade',
             sortOrder: 'desc',
             currentView: 'department',
+            showPhoto: true,
             showGrade: true,
             showYearlyEval: true,
             showPosition: false,
@@ -224,6 +225,8 @@ class AppController {
         // 表示オプション
         document.getElementById('chartTypeSelect').value = this.displayOptions.chartType;
         document.getElementById('sortOrderSelect').value = this.displayOptions.sortOrder;
+        const showPhotoElem = document.getElementById('showPhoto');
+        if (showPhotoElem) showPhotoElem.checked = this.displayOptions.showPhoto;
         document.getElementById('showGrade').checked = this.displayOptions.showGrade;
         document.getElementById('showYearlyEval').checked = this.displayOptions.showYearlyEval;
         document.getElementById('showPosition').checked = this.displayOptions.showPosition;
@@ -771,6 +774,14 @@ class AppController {
             showFlagIcon.addEventListener('change', e => {
                 this.displayOptions.showFlagIcon = e.target.checked;
                 this.refreshData(); // Refresh both sidebar and chart
+            });
+        }
+
+        const showPhoto = this.replaceElementWithClone('showPhoto');
+        if (showPhoto) {
+            showPhoto.addEventListener('change', e => {
+                this.displayOptions.showPhoto = e.target.checked;
+                this.refreshChart(); // 顔写真はチャート内カードのみに影響
             });
         }
 
