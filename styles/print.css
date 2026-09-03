@@ -1,0 +1,418 @@
+/* 印刷用スタイルシート - 人事評定視覚化アプリケーション */
+@media print {
+    /* 基本スタイル */
+    @page {
+        size: A4;
+        margin: 10mm 15mm; /* 上下左右の余白 */
+    }
+    
+    body {
+        font-size: 10pt;
+        background-color: #fff;
+        color: #000;
+        line-height: 1.4;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* 印刷時に非表示にする要素 */
+    body.printing header,
+    body.printing .sidebar,
+    body.printing .toolbar,
+    body.printing .tabs-navigation .action-buttons,
+    body.printing .modal-overlay,
+    body.printing .notification,
+    body.printing .tooltip,
+    body.printing .btn-action,
+    body.printing .btn-table-action,
+    body.printing .empty-cell-add,
+    body.printing .sidebar-collapse-btn,
+    body.printing .employee-search-container {
+        display: none !important;
+    }
+
+    /* 印刷ビューのレイアウト調整 */
+    .main-container {
+        display: block !important;
+        height: auto;
+        overflow: visible;
+        width: 100%;
+    }
+    
+    .content {
+        padding: 0 !important;
+        overflow: visible !important;
+        height: auto;
+        width: 100%;
+    }
+    
+    /* タブナビゲーション */
+    .tabs-navigation {
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+    }
+     
+    .tab-btn {
+        padding: 4px 8px;
+        color: #555 !important;
+        font-size: 11pt;
+        font-weight: normal;
+        border-bottom: none !important;
+    }
+     
+    .tab-btn.active {
+        color: #000 !important;
+        font-weight: bold;
+        background-color: #f0f0f0;
+    }
+
+    /* チャートコンテナ */
+    .chart-container {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        margin-top: 10px;
+        border-radius: 0 !important;
+        page-break-inside: avoid;
+        width: 100%;
+    }
+
+    /* ヘッダーと軸セルの固定解除 */
+    .chart-header,
+    .chart-axis-cell,
+    .department-chart-header,
+    .department-chart-department-cell,
+    .matrix-grade-label {
+        position: static !important;
+        color: #000 !important;
+        background-color: #f0f0f0 !important;
+        border-color: #ccc !important;
+        font-weight: bold;
+    }
+    
+    /* チャートセルのサイズ調整 */
+    .chart-header-cell,
+    .department-chart-header-cell {
+        font-size: 9pt;
+        padding: 3px 5px;
+        height: auto !important;
+        white-space: normal !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+    
+    .chart-axis-cell,
+    .department-chart-department-cell {
+        font-size: 9pt;
+        padding: 3px 5px;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+
+    /* テーブルの調整 */
+    .chart-row,
+    .department-chart-row {
+        page-break-inside: avoid;
+        min-height: 0 !important;
+        border-bottom: 1px solid #ccc;
+    }
+    
+    .chart-cell,
+    .department-chart-cell,
+    .team-chart-cell {
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        padding: 2px 4px;
+        font-size: 8pt;
+        vertical-align: middle;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        width: auto !important;
+        white-space: normal !important;
+    }
+    
+    /* マトリクス表のサイズ調整 */
+    .matrix-heatmap {
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+    
+    .matrix-heatmap th,
+    .matrix-heatmap td {
+        padding: 2px 3px !important;
+        min-width: 20px !important;
+        font-size: 8pt !important;
+    }
+
+    /* ===== カラー対応の評価カード ===== */
+    
+    /* 評価カード基本スタイル - 背景色保持 */
+    .evaluation-card, 
+    .employee-card .employee-badge, 
+    .position-indicator {
+        font-size: var(--font-size-xs) !important;
+        padding: 1px 3px !important;
+        border: 1px solid rgba(0,0,0,0.2) !important;
+        margin: 1px 2px !important;
+        border-radius: 2px !important;
+        min-height: 0 !important;
+        display: inline-block !important;
+        line-height: 1.2 !important;
+        /* 背景色は継承 - 白に強制しない */
+    }
+
+    /* グレード評価カード - 色保持 */
+    .evaluation-card.grade-evaluation {
+        /* 背景色を保持 - オーバーライドしない */
+        border: 1px solid rgba(0,0,0,0.25) !important;
+    }
+    
+    /* 部署バッジ */
+    .evaluation-card.department {
+        background-color: rgba(58, 138, 158, 0.15) !important;
+        border-color: rgba(58, 138, 158, 0.4) !important;
+        color: #333 !important;
+    }
+    
+    /* 役職バッジ */
+    .evaluation-card.position {
+        background-color: rgba(124, 96, 154, 0.15) !important;
+        border-color: rgba(124, 96, 154, 0.4) !important;
+        color: #333 !important;
+    }
+    
+    /* 所属班バッジ */
+    .evaluation-card.team {
+        background-color: rgba(74, 125, 180, 0.15) !important;
+        border-color: rgba(74, 125, 180, 0.4) !important;
+        color: #333 !important;
+    }
+    
+    /* 年度評価バッジ - 評価タイプごとの色分け */
+    .evaluation-card.yearly-evaluation[data-eval-type="A"] {
+        background-color: rgba(106, 142, 186, 0.15) !important;
+        border-color: rgba(106, 142, 186, 0.5) !important;
+        color: #333 !important;
+    }
+    
+    .evaluation-card.yearly-evaluation[data-eval-type="B"] {
+        background-color: rgba(84, 126, 106, 0.15) !important;
+        border-color: rgba(84, 126, 106, 0.5) !important;
+        color: #333 !important;
+    }
+    
+    .evaluation-card.yearly-evaluation[data-eval-type="C"] {
+        background-color: rgba(217, 168, 78, 0.15) !important;
+        border-color: rgba(217, 168, 78, 0.5) !important;
+        color: #333 !important;
+    }
+    
+    /* 年齢バッジ */
+    .evaluation-card.age-badge {
+        background-color: rgba(119, 158, 203, 0.15) !important;
+        border-color: rgba(119, 158, 203, 0.4) !important;
+        color: #333 !important;
+    }
+    
+    /* 勤続年数バッジ */
+    .evaluation-card.tenure-badge {
+        background-color: rgba(121, 189, 154, 0.15) !important;
+        border-color: rgba(121, 189, 154, 0.4) !important;
+        color: #333 !important;
+    }
+
+    /* 新卒/中途バッジ */
+    .evaluation-card.recruit-type-badge.new-graduate {
+        background-color: rgba(146, 115, 189, 0.15) !important;
+        border-color: rgba(146, 115, 189, 0.4) !important;
+        color: #333 !important;
+    }
+    
+    .evaluation-card.recruit-type-badge.mid-career {
+        background-color: rgba(180, 132, 85, 0.15) !important;
+        border-color: rgba(180, 132, 85, 0.4) !important;
+        color: #333 !important;
+    }
+    
+    /* 評価変化表示スタイル (矢印アイコン表示) */
+    .evaluation-card i, .evaluation-card .change-info,
+    .grade-change, .yearly-change, .consecutive-years {
+        display: inline !important;
+        font-size: 8pt !important;
+        margin-left: 2px !important;
+    }
+    
+    /* 評価変化 上昇/下降/変化なし */
+    .eval-increased i, .grade-change .fa-arrow-up {
+        color: #4A7DB4 !important;
+    }
+    
+    .eval-decreased i, .grade-change .fa-arrow-down {
+        color: #B55252 !important;
+    }
+    
+    .eval-unchanged i, .grade-change .fa-equals {
+        color: #777 !important;
+    }
+    
+    /* テーブル共通スタイル */
+    .table {
+        table-layout: auto;
+        width: 100%;
+        border: 1px solid #ccc;
+        font-size: 9pt;
+    }
+    
+    .table th, .table td {
+        border: 1px solid #ccc;
+        padding: 3px 5px;
+        text-align: left;
+        white-space: normal;
+        word-break: break-all;
+    }
+    
+    .table th {
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+        font-weight: bold;
+    }
+    
+    /* マトリクスセルの色分け保持 */
+    .matrix-cell-content {
+        background-color: inherit !important;
+    }
+
+    /* 昇給比較カードスタイル印刷用 */
+    .salary-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .salary-grade {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .stagnation {
+        border: none !important;
+    }
+
+    /* グレード軸セルの色保持 */
+    tr td:first-child[style*="background-color: var(--grade-"] {
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* アクション系要素の非表示 */
+    .filter-section, .employee-select-list,
+    .empty-chart button,
+    #employeeManagementTable th:last-child, 
+    #employeeManagementTable td:last-child,
+    .table .action-cell {
+        display: none !important;
+    }
+
+    /* 印刷最適化のための追加スタイル */
+    .evaluation-chart-table,
+    .department-chart,
+    .team-chart,
+    .matrix-heatmap {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: auto !important;
+    }
+    
+    /* 改ページ制御 */
+    .chart-container {
+        page-break-before: auto;
+        page-break-after: auto;
+    }
+    
+    /* 印刷の色調整を強制 */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+}
+
+/* 印刷プレビュー用スタイル - プレビューモード時にのみ適用 */
+.print-preview-mode .main-container {
+    background-color: #f9f9f9;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.print-preview-mode .content {
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    width: 210mm; /* A4幅 */
+    min-height: 297mm; /* A4高さ */
+    padding: 15mm !important;
+    position: relative;
+    overflow: visible !important;
+}
+
+.print-preview-mode .chart-container {
+    border: 1px solid #ddd;
+    margin-top: 10px;
+}
+
+/* プレビューモードでのページサイズ調整ボタン */
+.page-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+.orientation-switch {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.print-btn {
+    background-color: #3A8A9E;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.print-btn:hover {
+    background-color: #2C6A7B;
+}
+
+/* 印刷サイズ選択 */
+.print-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.print-settings label {
+    font-size: 12px;
+    color: #666;
+}
+
+.print-settings select {
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}

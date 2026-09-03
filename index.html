@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人事評定視覚化アプリケーション</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/evaluation.css">
+    <link rel="stylesheet" href="styles/certification.css">
+    <link rel="stylesheet" href="styles/setting-all.css">
+    <link rel="stylesheet" href="styles/print.css">
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header>
+        <h1><i class="fas fa-chart-line"></i> 人事評定視覚化アプリ</h1>
+        <div class="header-controls">
+            <button id="addEvaluationBtn" class="btn-action" title="評価追加">
+                <i class="fas fa-star-half-alt"></i>
+            </button>
+            <button id="manageEmployeesBtn" class="btn-action" title="社員追加">
+                <i class="fas fa-user-plus"></i>
+            </button>
+            <button id="settingsBtn" class="btn-action" title="設定">
+                <i class="fas fa-cog"></i>
+            </button>
+            <!-- 画像出力ボタンを追加 -->
+            <button id="exportImageBtn" class="btn-action" title="画像出力">
+                <i class="fas fa-camera"></i>
+            </button>
+            <button id="printBtn" class="btn-action" title="印刷">
+                <i class="fas fa-print"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツエリア -->
+    <div class="main-container">
+        <!-- サイドバー -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-collapse-btn" id="sidebarCollapseBtn">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="sidebar-content">
+            <!-- 評価年度フィルター -->
+            <div class="filter-section collapsed" id="yearFilter">
+                <h3><i class="fas fa-calendar-alt"></i> 評価年度フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="yearListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="yearListBox">すべて解除</button>
+                    </div>
+                    <select id="yearListBox" name="year" multiple class="filter-listbox">
+                        <!-- 評価年度オプションがJSで動的に追加される -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- 部署フィルター -->
+            <div class="filter-section collapsed" id="departmentFilter">
+                <h3><i class="fas fa-building"></i> 部署フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="departmentListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="departmentListBox">すべて解除</button>
+                    </div>
+                    <select id="departmentListBox" name="department" multiple class="filter-listbox">
+                        <!-- 部署オプションがJSで動的に追加される -->
+                    </select>
+                </div>
+            </div>
+            <!-- 所属班フィルター -->
+            <div class="filter-section collapsed" id="teamFilter">
+                <h3><i class="fas fa-users"></i> 所属班フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="teamListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="teamListBox">すべて解除</button>
+                    </div>
+                    <select id="teamListBox" name="team" multiple class="filter-listbox">
+                        <!-- 所属班オプションがJSで動的に追加される -->
+                    </select>
+                </div>
+            </div>
+            <!-- 役職フィルター -->
+            <div class="filter-section collapsed" id="positionFilter">
+                <h3><i class="fas fa-user-tie"></i> 役職フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="positionListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="positionListBox">すべて解除</button>
+                    </div>
+                    <select id="positionListBox" name="position" multiple class="filter-listbox">
+                        <!-- 役職オプションがJSで動的に追加される -->
+                    </select>
+                </div>
+            </div>
+            <!-- 年齢フィルター -->
+            <div class="filter-section collapsed" id="ageFilter">
+                <h3><i class="fas fa-user-clock"></i> 年齢フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="ageListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="ageListBox">すべて解除</button>
+                    </div>
+                    <select id="ageListBox" name="age" multiple class="filter-listbox">
+                        <option value="10s" selected>10代</option>
+                        <option value="20s" selected>20代</option>
+                        <option value="30s" selected>30代</option>
+                        <option value="40s" selected>40代</option>
+                        <option value="50s" selected>50代</option>
+                        <option value="60s" selected>60代</option>
+                    </select>
+                    <p class="text-sm text-muted mt-xs">※ 年齢範囲スライダーも適用されます</p>
+                </div>
+            </div>
+            <!-- 勤続年数フィルター -->
+            <div class="filter-section collapsed" id="tenureFilter">
+                <h3><i class="fas fa-business-time"></i> 勤続年数フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="tenureListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="tenureListBox">すべて解除</button>
+                    </div>
+                    <select id="tenureListBox" name="tenure" multiple class="filter-listbox">
+                        <option value="0-5" selected>0-5年</option>
+                        <option value="6-10" selected>6-10年</option>
+                        <option value="11-15" selected>11-15年</option>
+                        <option value="16-20" selected>16-20年</option>
+                        <option value="21-30" selected>21-30年</option>
+                        <option value="31-" selected>31年以上</option>
+                    </select>
+                    <p class="text-sm text-muted mt-xs">※ 勤続年数範囲スライダーも適用されます</p>
+                </div>
+            </div>
+            <!-- グレードフィルター -->
+            <div class="filter-section collapsed" id="gradeFilter">
+                <h3><i class="fas fa-award"></i> グレードフィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="gradeListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="gradeListBox">すべて解除</button>
+                    </div>
+                    <select id="gradeListBox" name="grade" multiple class="filter-listbox">
+                        <!-- グレードオプションがJSで動的に追加される -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- 評価タイプフィルター -->
+            <div class="filter-section collapsed" id="evaluationFilter">
+                <h3><i class="fas fa-star"></i> 評価タイプフィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="evaluationTypeListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="evaluationTypeListBox">すべて解除</button>
+                    </div>
+                    <select id="evaluationTypeListBox" name="evaluationType" multiple class="filter-listbox">
+                        <option value="A" selected>A評価</option>
+                        <option value="B" selected>B評価</option>
+                        <option value="C" selected>C評価</option>
+                    </select>
+                </div>
+            </div>
+            <!-- 新卒/中途フィルター -->
+            <div class="filter-section collapsed" id="recruitTypeFilter">
+                <h3><i class="fas fa-graduation-cap"></i> 新卒/中途フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="recruitTypeListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="recruitTypeListBox">すべて解除</button>
+                    </div>
+                    <select id="recruitTypeListBox" name="recruitType" multiple class="filter-listbox">
+                        <option value="new-graduate" selected>新卒採用</option>
+                        <option value="mid-career" selected>中途採用</option>
+                    </select>
+                </div>
+            </div>
+            <!-- 契約形態フィルター -->
+            <div class="filter-section collapsed" id="contractTypeFilter">
+                <h3><i class="fas fa-user-tag"></i> 契約形態フィルター <i class="fas fa-chevron-right"></i></h3>
+                <div class="filter-content">
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" data-target="contractTypeListBox">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" data-target="contractTypeListBox">すべて解除</button>
+                    </div>
+                    <select id="contractTypeListBox" name="contractType" multiple class="filter-listbox">
+                        <option value="full-time" selected>正社員</option>
+                        <option value="probation" selected>見習社員</option>
+                        <option value="contract" selected>契約社員</option>
+                        <option value="dispatch" selected>派遣社員</option>
+                        <option value="seconded" selected>出向社員</option>
+                        <option value="retired" selected>退職者</option>
+                    </select>
+                </div>
+            </div>
+
+                <!-- チャート表示用社員リスト -->
+                <div class="employee-select-list">
+                    <div class="employee-select-list-header">
+                    <h3><i class="fas fa-users"></i> 表示社員選択</h3>
+                    <span class="selection-count" id="selectionCountBox"><span id="selectedEmployeeCount2">0</span>/<span id="totalEmployeeCount2">0</span>名</span>
+                    </div>
+                    <span class="selection-info">(クリックで選択/解除)</span>
+                    <!-- 社員選択状態を表示するブロックを非表示に -->
+                    <div class="filter-actions">
+                        <button type="button" class="btn-filter btn-select-all" id="selectAllEmployeesBtn">すべて選択</button>
+                        <button type="button" class="btn-filter btn-deselect-all" id="deselectAllEmployeesBtn">すべて解除</button>
+                    </div>
+                    <div class="employee-search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="employeeSelectSearch" class="employee-search" placeholder="表示社員検索...">
+                    </div>
+                    <div id="employeeSelectListContainer" class="employee-select-list-container">
+                        <!-- チャート表示用社員リストアイテムがJSで動的に追加される -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- メインコンテンツ -->
+        <div class="content">
+            <!-- タブナビゲーション -->
+            <div class="tabs-navigation">
+                <button class="tab-btn" data-view="department"><i class="fas fa-building"></i> 部署別配置</button>
+                <button class="tab-btn" data-view="team"><i class="fas fa-users"></i> 班別配置</button>
+                <button class="tab-btn active" data-view="chart"><i class="fas fa-chart-line"></i> 評価チャート</button>
+                <button class="tab-btn" data-view="salary-comparison"><i class="fas fa-search-dollar"></i> 昇給分析</button>
+                <button class="tab-btn" data-view="star-chart"><i class="fas fa-th-list"></i> 星取表</button>
+                <button class="tab-btn" data-view="matrix"><i class="fas fa-th"></i> マトリクス分布</button>
+                <button class="tab-btn" data-view="career-path"><i class="fas fa-route"></i> キャリアパス分析</button>
+
+                <div class="action-buttons">
+                    <!-- 更新ボタン削除 -->
+                    <!-- 印刷ボタン削除 -->
+                </div>
+            </div>
+
+            <!-- ツールバー -->
+            <div class="toolbar">
+                <!-- 表示形式 (共通) -->
+                <div class="toolbar-section">
+                    <label for="chartTypeSelect">表示形式:</label>
+                    <select id="chartTypeSelect" class="select">
+                        <option value="grade">グレード軸</option>
+                        <option value="age">年齢軸</option>
+                        <option value="tenure">勤続年数軸</option>
+                        <option value="year">年度軸</option>
+                    </select>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <!-- 表示順序 (共通) -->
+                <div class="toolbar-section">
+                    <label for="sortOrderSelect">表示順序:</label>
+                    <select id="sortOrderSelect" class="select">
+                        <option value="desc">降順</option>
+                        <option value="asc">昇順</option>
+                    </select>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <!-- 年齢範囲スライダー (年齢軸の時のみ有効) -->
+                <div class="toolbar-section age-range-slider-container">
+                    <label><i class="fas fa-sliders-h"></i> 年齢範囲:</label>
+                    <div class="compact-double-slider">
+                        <div class="double-slider-track"></div>
+                        <div class="double-slider-range"></div>
+                        <div class="double-slider-thumb" id="minThumb"></div>
+                        <div class="double-slider-thumb" id="maxThumb"></div>
+                    </div>
+                    <div class="double-slider-values">
+                        <span id="minValue">18</span>-<span id="maxValue">65</span>
+                    </div>
+                </div>
+                
+                <!-- 勤続年数範囲スライダー (勤続年数軸の時のみ有効) -->
+                <div class="toolbar-section tenure-range-slider-container">
+                    <label><i class="fas fa-sliders-h"></i> 勤続年数範囲:</label>
+                    <div class="compact-double-slider">
+                        <div class="double-slider-track"></div>
+                        <div class="double-slider-range"></div>
+                        <div class="double-slider-thumb" id="minTenureThumb"></div>
+                        <div class="double-slider-thumb" id="maxTenureThumb"></div>
+                    </div>
+                    <div class="double-slider-values">
+                        <span id="minTenureValue">0</span>-<span id="maxTenureValue">50</span>
+                    </div>
+                </div>
+
+                <div class="toolbar-divider"></div>
+                <!-- 星取表用ツールバーセクション -->
+                <div class="toolbar-section star-chart-options" style="display: none;">
+                    <label for="starChartTypeSelect">表示対象:</label>
+                    <select id="starChartTypeSelect" class="select">
+                        <option value="qualification">資格</option>
+                        <option value="certification">作業認定</option>
+                    </select>
+                    <!-- 追加: 分類・区分表示チェックボックス -->
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showStarChartCategory" checked>
+                        <label for="showStarChartCategory" title="星取表で分類を表示">分類</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showStarChartClassification" checked>
+                        <label for="showStarChartClassification" title="星取表で区分を表示 (作業認定のみ)">区分</label>
+                    </div>
+                </div>
+                <div class="toolbar-divider star-chart-options-divider" style="display: none;"></div>
+
+                <!-- 表示項目チェックボックス (共通) -->
+                <div class="toolbar-section">
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showGrade" checked>
+                        <label for="showGrade" title="チャート/配置でグレードを表示">グレード</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showGradeChange" checked>
+                        <label for="showGradeChange" title="グレード変化情報を表示">グレード変化</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showYearlyEval" checked>
+                        <label for="showYearlyEval" title="チャート/配置で年度評価と変化を表示">年度評価</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showYearlyEvalChange" checked>
+                        <label for="showYearlyEvalChange" title="年度評価変化情報を表示">年評変化</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showPosition">
+                        <label for="showPosition" title="チャート/配置で役職を表示">役職</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showDepartmentBadge" checked>
+                        <label for="showDepartmentBadge" title="チャート/配置で部署バッジを表示">部署</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showTeam">
+                        <label for="showTeam" title="チャート/配置で所属班を表示">所属班</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showAge">
+                        <label for="showAge" title="チャート/配置で年齢を表示">年齢</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showTenure">
+                        <label for="showTenure" title="チャート/配置で勤続年数を表示">勤続年数</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showRecruitType">
+                        <label for="showRecruitType" title="新卒・中途の区分を表示">新卒/中途</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showContractType" checked>
+                        <label for="showContractType" title="契約形態を表示">契約形態</label>
+                    </div>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showFlagIcon" checked>
+                        <label for="showFlagIcon" title="フラグアイコンを表示">フラグ</label>
+                    </div>
+                    <div class="checkbox-item compact salary-comparison-options" style="display: none;">
+                        <input type="checkbox" id="showFullName">
+                        <label for="showFullName" title="昇給分析でフルネームを表示">フルネーム</label>
+                    </div>
+                </div>
+
+                <div class="toolbar-divider"></div>
+            </div>
+
+            <!-- チャート表示エリア -->
+            <div class="chart-container" id="chartContainer">
+                <!-- 初期表示 or 空のメッセージがここに表示される -->
+                <div class="empty-chart">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>表示データがありません</h3>
+                    <p>左側のリストからチャートに表示する社員を選択するか、フィルター条件を確認してください。</p>
+                    <button id="focusEmployeeListBtn" class="btn btn-primary">
+                        <i class="fas fa-users"></i> 社員リストを確認
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- 統合設定モーダル -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal modal-integrated">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-cog"></i> 統合管理パネル</h3>
+            <button class="modal-close" id="closeSettingsModal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body integrated-layout">
+            <!-- 左側アコーディオンナビゲーション -->
+            <div class="settings-nav">
+                <!-- データ管理セクション -->
+                <div class="accordion-section">
+                    <div class="accordion-header">
+                        <h4 class="accordion-title"><i class="fas fa-database"></i> データ管理</h4>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <ul class="settings-nav-list">
+                            <li><a href="#" class="settings-nav-item" data-section="import-export"><i class="fas fa-exchange-alt"></i> インポート/エクスポート</a></li>
+                            <li><a href="#" class="settings-nav-item" data-section="data-management"><i class="fas fa-trash-alt"></i> データリセット</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 社員管理セクション -->
+                <div class="accordion-section">
+                    <div class="accordion-header">
+                        <h4 class="accordion-title"><i class="fas fa-users"></i> 社員管理</h4>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <ul class="settings-nav-list">
+                            <li><a href="#" class="settings-nav-item" data-section="employee-management"><i class="fas fa-users-cog"></i> 社員一覧・登録</a></li>
+                            <li><a href="#" class="settings-nav-item" data-section="employee-qualifications"><i class="fas fa-user-graduate"></i> 社員資格設定</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- マスタ管理セクション -->
+                <div class="accordion-section">
+                    <div class="accordion-header">
+                        <h4 class="accordion-title"><i class="fas fa-sitemap"></i> マスタ管理</h4>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <ul class="settings-nav-list">
+                            <li><a href="#" class="settings-nav-item" data-section="department"><i class="fas fa-building"></i> 部署管理</a></li>
+                            <li><a href="#" class="settings-nav-item" data-section="team"><i class="fas fa-users"></i> 所属班管理</a></li>
+                            <li><a href="#" class="settings-nav-item" data-section="position"><i class="fas fa-user-tie"></i> 役職管理</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 評価マスタセクション -->
+                <div class="accordion-section">
+                    <div class="accordion-header">
+                        <h4 class="accordion-title"><i class="fas fa-star"></i> 評価マスタ</h4>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <ul class="settings-nav-list">
+                            <li><a href="#" class="settings-nav-item" data-section="grade"><i class="fas fa-layer-group"></i> グレード評価</a></li>
+                            <li><a href="#" class="settings-nav-item" data-section="yearly"><i class="fas fa-calendar-check"></i> 年度評価</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 資格/認定管理セクション -->
+                <div class="accordion-section">
+                    <div class="accordion-header">
+                        <h4 class="accordion-title"><i class="fas fa-certificate"></i> 資格/認定管理</h4>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <ul class="settings-nav-list">
+                            <li><a href="#" class="settings-nav-item" data-section="qualification"><i class="fas fa-award"></i> 資格マスタ</a></li>
+                            <li><a href="#" class="settings-nav-item" data-section="certification"><i class="fas fa-tools"></i> 作業認定マスタ</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右側コンテンツパネル -->
+            <div class="settings-content">
+                <!-- 一般設定セクションを削除 -->
+                
+                <!-- インポート/エクスポート パネル -->
+                <div class="settings-section" id="import-export-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-exchange-alt"></i> インポート/エクスポート</h2>
+                        <p>データのバックアップと復元を管理します</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="settings-panel">
+                            <h3><i class="fas fa-file-export"></i> データエクスポート</h3>
+                            <p>現在のデータをバックアップまたは他の環境へ移行するためにエクスポートします。</p>
+                            
+                            <div class="export-options">
+                                <h5 class="mb-xs">エクスポート種類</h5>
+                                <div class="radio-options">
+                                    <label class="radio-label">
+                                        <input type="radio" name="exportType" value="all" checked> すべてのデータ
+                                        <span class="text-sm text-muted">(マスタ・登録データ全て)</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="exportType" value="master"> マスタデータのみ
+                                        <span class="text-sm text-muted">(部署・役職・所属班・設定等)</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="exportType" value="data"> 登録データのみ
+                                        <span class="text-sm text-muted">(社員・評価データ)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button id="exportDataBtn" class="btn btn-primary">
+                                    <i class="fas fa-file-export"></i> データをエクスポート
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-panel mt-md">
+                            <h3><i class="fas fa-file-import"></i> データインポート</h3>
+                            <p class="text-danger"><strong>注意:</strong> インポートを実行すると、選択されたデータタイプに応じて既存データが上書きされます。</p>
+                            
+                            <div class="file-upload-container">
+                                <div class="file-upload-area" id="fileDropArea">
+                                    <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
+                                    <div class="file-upload-text">JSONファイルをドラッグ＆ドロップ</div>
+                                    <div class="file-upload-help">または下のボタンをクリックしてファイルを選択</div>
+                                    <input type="file" id="importFile" accept=".json" class="file-upload-input">
+                                </div>
+                                
+                                <div class="file-selected-info" id="fileInfo" style="display: none;">
+                                    <i class="fas fa-file-code file-selected-icon"></i>
+                                    <div class="file-selected-name" id="fileName">選択されたファイル名</div>
+                                    <div class="file-selected-size" id="fileSize">0 KB</div>
+                                    <button class="file-remove-btn" id="removeFileBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button id="importDataBtn" class="btn btn-primary" disabled>
+                                    <i class="fas fa-file-import"></i> データをインポート
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- データ管理パネル -->
+                <div class="settings-section" id="data-management-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-database"></i> データ管理</h2>
+                        <p>アプリケーションデータの管理と初期化を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="danger-zone">
+                            <h5 class="danger-zone-title"><i class="fas fa-exclamation-triangle"></i> 危険操作エリア</h5>
+                            <div class="danger-zone-content">
+                                <p class="text-sm mb-sm">以下の操作は、アプリケーションのデータに取り返しのつかない変更を加えます。十分に注意して実行してください。</p>
+                                
+                                <div class="danger-action">
+                                    <h6 class="danger-action-title">データオールクリア</h6>
+                                    <p class="text-sm mb-sm">すべての社員データと評価データを削除します。サンプルデータは生成されません。</p>
+                                    <p class="text-sm mb-sm text-danger"><strong>注意:</strong> 現在のデータはすべて失われます。重要なデータは事前にエクスポートしてください。</p>
+                                    <button id="clearAllDataBtn" class="btn btn-danger">
+                                        <i class="fas fa-trash-alt"></i> データオールクリア
+                                    </button>
+                                </div>
+                                
+                                <div class="danger-action">
+                                    <h6 class="danger-action-title">サンプルデータでリセット</h6>
+                                    <p class="text-sm mb-sm">すべてのデータを削除し、サンプルデータを再生成します。</p>
+                                    <p class="text-sm mb-sm text-danger"><strong>注意:</strong> 現在のデータはすべて失われます。重要なデータは事前にエクスポートしてください。</p>
+                                    <button id="resetWithSampleDataBtn" class="btn btn-secondary">
+                                        <i class="fas fa-sync-alt"></i> サンプルデータでリセット
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 部署管理パネル -->
+                <div class="settings-section" id="department-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-building"></i> 部署管理</h2>
+                        <p>部署情報の追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="form-group">
+                            <label class="form-label" for="departmentName">新規部署名</label>
+                            <div class="form-row form-row-compact">
+                                <div class="form-col">
+                                    <input type="text" id="departmentName" class="form-input" placeholder="新しい部署名を入力...">
+                                </div>
+                                <div>
+                                    <button id="addDepartmentBtn" class="btn btn-primary">追加</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container settings-table-container">
+                            <table class="table" id="departmentTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>部署名</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departmentTableBody">
+                                    <!-- 部署リストがJSで動的に追加される -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 所属班管理パネル -->
+                <div class="settings-section" id="team-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-users"></i> 所属班管理</h2>
+                        <p>所属班情報の追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="form-group">
+                            <label class="form-label" for="teamName">新規所属班名</label>
+                            <div class="form-row form-row-compact">
+                                <div class="form-col">
+                                    <input type="text" id="teamName" class="form-input" placeholder="新しい所属班名を入力...">
+                                </div>
+                                <div>
+                                    <button id="addTeamBtn" class="btn btn-primary">追加</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container settings-table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>名称</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teamTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 役職管理パネル -->
+                <div class="settings-section" id="position-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-user-tie"></i> 役職管理</h2>
+                        <p>役職情報の追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="form-group">
+                            <label class="form-label" for="positionName">新規役職名</label>
+                            <div class="form-row form-row-compact">
+                                <div class="form-col">
+                                    <input type="text" id="positionName" class="form-input" placeholder="新しい役職名を入力...">
+                                </div>
+                                <div>
+                                    <button id="addPositionBtn" class="btn btn-primary">追加</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container settings-table-container">
+                            <table class="table" id="positionTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>役職名</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="positionTableBody">
+                                    <!-- 役職リストがJSで動的に追加される -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- グレード管理パネル -->
+                <div class="settings-section" id="grade-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-layer-group"></i> グレード評価</h2>
+                        <p>グレード評価の追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="form-group">
+                            <label class="form-label" for="gradeName">新規グレード名</label>
+                            <div class="form-row form-row-compact">
+                                <div class="form-col">
+                                    <input type="text" id="gradeName" class="form-input" placeholder="新しいグレード名を入力... (例: G1)">
+                                </div>
+                                <div>
+                                    <button id="addGradeBtn" class="btn btn-primary">追加</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grade-colors-container mb-md">
+                            <!-- グレード色サンプルがJSで動的に追加される -->
+                        </div>
+                        
+                        <div class="table-container settings-table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>グレード</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gEvalTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 年度評価管理パネル（改良版） -->
+                <div class="settings-section" id="yearly-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-star"></i> 年度評価</h2>
+                        <p>年度評価の種別ごとの設定を管理します</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="evaluation-tabs">
+                            <div class="evaluation-tab-header">
+                                <button class="eval-tab-btn active" data-eval-tab="a-eval">A評価（一般評価）</button>
+                                <button class="eval-tab-btn" data-eval-tab="b-eval">B評価（G7以上/作業長/組長）</button>
+                                <button class="eval-tab-btn" data-eval-tab="c-eval">C評価（60歳以上/エルダー）</button>
+                            </div>
+                            
+                            <!-- A評価タブコンテンツ -->
+                            <div class="eval-tab-content active" id="a-eval-tab">
+                                <div class="eval-section">
+                                    <div class="eval-section-header">
+                                        <h3>A評価（一般評価）管理</h3>
+                                        <div class="form-row form-row-compact">
+                                            <div class="form-col">
+                                                <input type="text" id="newAEval" class="form-input" placeholder="新しいA評価を入力... (例: A6)">
+                                            </div>
+                                            <div>
+                                                <button id="addAEvalBtn" class="btn btn-primary">追加</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-container settings-table-container mb-md">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>評価名</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="aEvalTableBody">
+                                                <!-- A評価リストがJSで動的に追加される -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- B評価タブコンテンツ -->
+                            <div class="eval-tab-content" id="b-eval-tab">
+                                <div class="eval-section">
+                                    <div class="eval-section-header">
+                                        <h3>B評価（G7以上または作業長/組長専用）管理</h3>
+                                        <div class="form-row form-row-compact">
+                                            <div class="form-col">
+                                                <input type="text" id="newBEval" class="form-input" placeholder="新しいB評価を入力... (例: B11)">
+                                            </div>
+                                            <div>
+                                                <button id="addBEvalBtn" class="btn btn-primary">追加</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-container settings-table-container mb-md">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>評価名</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="bEvalTableBody">
+                                                <!-- B評価リストがJSで動的に追加される -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- C評価タブコンテンツ -->
+                            <div class="eval-tab-content" id="c-eval-tab">
+                                <div class="eval-section">
+                                    <div class="eval-section-header">
+                                        <h3>C評価（60歳以上専用評価、エルダーとセット）管理</h3>
+                                        <div class="form-row form-row-compact">
+                                            <div class="form-col">
+                                                <input type="text" id="newCEval" class="form-input" placeholder="新しいC評価を入力... (例: C12)">
+                                            </div>
+                                            <div>
+                                                <button id="addCEvalBtn" class="btn btn-primary">追加</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-container settings-table-container mb-md">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>評価名</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cEvalTableBody">
+                                                <!-- C評価リストがJSで動的に追加される -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-panel mt-md">
+                            <h4 class="info-panel-title"><i class="fas fa-info-circle"></i> 評価表示について</h4>
+                            <p class="text-sm">チャート表示では、前年度と比較して評価が：</p>
+                            <div class="mt-xs evaluation-status-container">
+                                <div class="evaluation-status-item"><i class="fas fa-arrow-up text-info"></i> 上がった場合 (青矢印)</div>
+                                <div class="evaluation-status-item"><i class="fas fa-arrow-down text-danger"></i> 下がった場合 (赤矢印)</div>
+                                <div class="evaluation-status-item"><i class="fas fa-equals text-muted"></i> 変わらない場合 (灰等号)</div>
+                            </div>
+                            <p class="text-sm mt-xs">変わらない場合は、その評価が連続している年数が表示されます（例: <i class="fas fa-equals text-muted"></i> B3 (3年)）。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 資格マスタパネル -->
+                <div class="settings-section" id="qualification-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-certificate"></i> 資格マスタ</h2>
+                        <p>資格情報の追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="management-controls">
+                            <div class="search-container">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="qualificationSearch" class="search-input" placeholder="資格検索...">
+                            </div>
+                            <div class="btn-group">
+                                <button id="addQualificationBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> 資格追加
+                                </button>
+                                <button id="importQualificationsBtn" class="btn btn-secondary">
+                                    <i class="fas fa-file-import"></i> CSVインポート
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container settings-table-container">
+                            <table class="table" id="qualificationTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>資格名</th>
+                                        <th>分類</th>
+                                        <th>説明</th>
+                                        <th>有効期間</th>
+                                        <th>発行機関</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="qualificationTableBody">
+                                    <!-- 資格リストがJSで動的に追加される -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 作業認定マスタパネル -->
+                <div class="settings-section" id="certification-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-tools"></i> 作業認定マスタ</h2>
+                        <p>作業認定情報の追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="management-controls">
+                            <div class="search-container">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="certificationSearch" class="search-input" placeholder="作業認定検索...">
+                            </div>
+                            <div class="btn-group">
+                                <button id="addWorkCertificationBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> 作業認定追加
+                                </button>
+                                <button id="importWorkCertificationsBtn" class="btn btn-secondary">
+                                    <i class="fas fa-file-import"></i> CSVインポート
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container settings-table-container">
+                            <table class="table" id="workCertificationTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>作業名</th>
+                                        <th>分類</th>
+                                        <th>区分</th>
+                                        <th>説明</th>
+                                        <th>有効期間</th>
+                                        <th>必要研修</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="workCertificationTableBody">
+                                    <!-- 作業認定リストがJSで動的に追加される -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 社員管理パネル -->
+                <div class="settings-section" id="employee-management-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-users-cog"></i> 社員一覧・登録</h2>
+                        <p>社員情報の一覧と追加・編集・削除を行います</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="management-controls">
+                            <div class="search-container">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="employeeManagementSearch" class="search-input" placeholder="社員検索...">
+                            </div>
+                            <button id="openAddEmployeeModalBtn" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> 社員追加
+                            </button>
+                        </div>
+                        <!-- 社員一覧テーブル構造 -->
+                        <div class="table-container settings-table-container">
+                            <table class="table" id="employeeManagementTable">
+                                <thead>
+                                    <tr>
+                                        <th>社員番号</th>
+                                        <th>氏名</th>
+                                        <th>部署</th>
+                                        <th>班</th>
+                                        <th>役職</th>
+                                        <th>最新グレード</th>
+                                        <th>社員情報操作</th>
+                                        <th>資格認定情報</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employeeManagementTableBody">
+                                    <!-- 社員リストがJSで動的に追加される -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 社員資格管理パネル -->
+                <div class="settings-section" id="employee-qualifications-section">
+                    <div class="settings-section-header">
+                        <h2><i class="fas fa-user-graduate"></i> 社員資格設定</h2>
+                        <p>社員ごとの資格と作業認定を管理します</p>
+                    </div>
+                    
+                    <div class="settings-section-content">
+                        <div class="management-controls">
+                            <div class="search-container employee-select-search">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="employeeQualificationSearch" class="search-input" placeholder="社員を検索...">
+                            </div>
+                        </div>
+                        
+                        <div class="employee-selector-container">
+                            <h4 class="mb-sm"><i class="fas fa-user"></i> 社員を選択</h4>
+                            <div class="employee-selector" id="employeeSelector">
+                                <!-- 社員一覧がJSで動的に追加される -->
+                            </div>
+                        </div>
+                        
+                        <div class="employee-qualifications-container" id="employeeQualificationsContent">
+                            <div class="empty-state">
+                                <i class="fas fa-user-circle"></i>
+                                <h4>社員を選択してください</h4>
+                                <p>左のリストから社員を選択すると、その社員の資格と作業認定が表示されます。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="closeSettingsBtn">閉じる</button>
+            <button class="btn btn-primary" id="saveSettingsBtn">設定を保存</button>
+        </div>
+    </div>
+</div>
+
+    <!-- サブモーダル群: まだ別モーダルとして残すもの -->
+
+    <!-- 画像出力モーダルを追加 -->
+    <div class="modal-overlay" id="exportImageModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-camera"></i> 画像出力</h3>
+                <button class="modal-close" id="closeExportImageModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm mb-md text-muted">現在表示中のチャートを画像ファイル（PNG）として保存します。</p>
+                <div class="form-group">
+                    <label class="form-label">出力形式</label>
+                    <div class="radio-options">
+                        <label class="radio-label">
+                            <input type="radio" name="exportImageMode" value="single" checked>
+                            <span>全体を1枚の画像にする</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="exportImageMode" value="split">
+                            <span>指定枚数に分割して出力する</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" id="splitSettingsGroup" style="display: none; background-color: var(--base-light-gray); padding: var(--spacing-sm); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-sm);">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label" for="splitDirection">分割方向</label>
+                            <select id="splitDirection" class="form-input">
+                                <option value="horizontal">横方向（幅を分割）</option>
+                                <option value="vertical">縦方向（高さを分割）</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label" for="splitCount">分割数</label>
+                            <input type="number" id="splitCount" class="form-input" min="2" max="10" value="2">
+                        </div>
+                    </div>
+                    <p class="text-xs text-muted mt-xs">※横長のチャートは横方向に、縦長の表は縦方向に分割すると見やすくなります。</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">背景色</label>
+                    <select id="exportImageBgColor" class="form-input">
+                        <option value="#ffffff">白 (デフォルト)</option>
+                        <option value="transparent">透過 (PNG)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelExportImageBtn">キャンセル</button>
+                <button class="btn btn-primary" id="executeExportImageBtn">
+                    <i class="fas fa-download"></i> 出力実行
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 社員追加/編集モーダル -->
+    <div class="modal-overlay" id="employeeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="employeeModalTitle">社員追加</h3>
+                <button class="modal-close" id="closeEmployeeModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm">
+                    <div class="employee-form-layout">
+                        <!-- 左側：写真エリア -->
+                        <div class="employee-photo-section">
+                            <div class="employee-main-photo-container">
+                                <img id="employeeMainPhoto" class="employee-main-photo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>" alt="社員写真">
+                            </div>
+                            <div id="employeePhotoThumbnails" class="employee-photo-thumbnails">
+                                <!-- サムネイルが動的に追加される -->
+                            </div>
+                            <label class="employee-photo-upload-btn">
+                                <i class="fas fa-camera"></i> 写真を追加
+                                <input type="file" id="employeePhotoInput" accept="image/jpeg, image/png, image/webp" multiple style="display:none;">
+                            </label>
+                            <p class="text-xs text-muted text-center" style="margin-top: 4px; line-height: 1.2;">※顔をクリックで<br>メイン画像に設定</p>
+                        </div>
+                        
+                        <!-- 右側：基本情報エリア -->
+                        <div class="employee-info-section">
+                            <input type="hidden" id="employeeId">
+                            <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeNumber">社員番号</label>
+                                <input type="text" id="employeeNumber" class="form-input" placeholder="5〜8桁の数値（任意）">
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeContractType">契約形態</label>
+                                <select id="employeeContractType" class="form-input" required>
+                                    <option value="full-time">正社員</option>
+                                    <option value="probation">見習社員</option>
+                                    <option value="contract">契約社員</option>
+                                    <option value="dispatch">派遣社員</option>
+                                    <option value="seconded">出向社員</option>
+                                    <option value="retired">退職者</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeLastName">姓</label>
+                                <input type="text" id="employeeLastName" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeFirstName">名</label>
+                                <input type="text" id="employeeFirstName" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeBirthdate">生年月日</label>
+                                <input type="date" id="employeeBirthdate" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeJoinDate">入社年月日</label>
+                                <input type="date" id="employeeJoinDate" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeDepartment">部署</label>
+                                <select id="employeeDepartment" class="form-input" required>
+                                    <!-- 部署選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeTeam">所属班</label>
+                                <select id="employeeTeam" class="form-input">
+                                    <option value="">なし</option>
+                                    <!-- 所属班選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeePosition">役職</label>
+                                <select id="employeePosition" class="form-input">
+                                    <option value="">なし</option>
+                                    <!-- 役職選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="employeeLatestGrade">最新グレード</label>
+                                <input type="text" id="employeeLatestGrade" class="form-input" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="employeeNotes">備考</label>
+                        <textarea id="employeeNotes" class="form-input" rows="2"></textarea>
+                    </div>
+                        </div> <!-- /employee-info-section -->
+                    </div> <!-- /employee-form-layout -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelEmployeeBtn">キャンセル</button>
+                <button class="btn btn-primary" id="saveEmployeeBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 評価追加/編集モーダル (年度評価モーダルはそのまま残す) -->
+    <div class="modal-overlay" id="evaluationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="evaluationModalTitle">評価追加</h3>
+                <button class="modal-close" id="closeEvaluationModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="evaluationForm">
+                    <input type="hidden" id="evaluationId">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationEmployee">対象社員</label>
+                                <select id="evaluationEmployee" class="form-input" required data-include-empty="true">
+                                    <!-- 社員選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationYear">評価年度</label>
+                                <input type="number" id="evaluationYear" class="form-input" min="1980" max="2100" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationAge">年齢</label>
+                                <input type="number" id="evaluationAge" class="form-input" readonly>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationTenure">勤続年数</label>
+                                <input type="number" id="evaluationTenure" class="form-input" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationGrade">グレード評価</label>
+                                <select id="evaluationGrade" class="form-input" required>
+                                    <!-- グレード評価選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationYearly">年度評価</label>
+                                <select id="evaluationYearly" class="form-input" required>
+                                    <!-- 年度評価選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationPosition">評価時役職</label>
+                                <select id="evaluationPosition" class="form-input">
+                                    <option value="">なし</option>
+                                    <!-- 役職選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="evaluationDepartment">評価時部署</label>
+                                <select id="evaluationDepartment" class="form-input" required>
+                                    <!-- 部署選択肢がJSで動的に追加される -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 実施に表示されるアイコンフラグのサンプルの意味合い（ui-charts.js内） -->
+                    <div class="form-group">
+                        <label class="form-label">フラグ</label>
+                        <div class="flag-options">
+                            <label class="flag-button" data-flag="">
+                                <input type="radio" name="evaluationFlag" value="" checked> 
+                                <i class="fas fa-times-circle"></i> なし
+                            </label>
+                            <label class="flag-button promotion" data-flag="promotion">
+                                <input type="radio" name="evaluationFlag" value="promotion"> 
+                                <i class="fas fa-star text-success"></i> 昇格対象
+                            </label>
+                            <label class="flag-button retirement" data-flag="retirement">
+                                <input type="radio" name="evaluationFlag" value="retirement"> 
+                                <i class="fas fa-ban text-danger"></i> 退職者
+                            </label>
+                            <label class="flag-button consideration" data-flag="consideration">
+                                <input type="radio" name="evaluationFlag" value="consideration"> 
+                                <i class="fas fa-hourglass-half text-warning"></i> 検討中
+                            </label>
+                            <label class="flag-button check" data-flag="check">
+                                <input type="radio" name="evaluationFlag" value="check"> 
+                                <i class="fas fa-clipboard-check text-info"></i> チェック
+                            </label>
+                            <label class="flag-button medical" data-flag="medical">
+                                <input type="radio" name="evaluationFlag" value="medical"> 
+                                <i class="fas fa-heartbeat" style="color: hotpink;"></i> 傷病中
+                            </label>
+                            <label class="flag-button pending" data-flag="pending">
+                                <input type="radio" name="evaluationFlag" value="pending"> 
+                                <i class="fas fa-clock" style="color: gray;"></i> 確定待ち
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="evaluationNotes">評価備考</label>
+                        <textarea id="evaluationNotes" class="form-input" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelEvaluationBtn">キャンセル</button>
+                <button class="btn btn-danger" id="deleteEvaluationBtn" style="display: none;">削除</button>
+                <button class="btn btn-primary" id="saveEvaluationBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 資格追加/編集モーダル -->
+    <div class="modal-overlay" id="qualificationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="qualificationModalTitle"><i class="fas fa-certificate"></i> 資格追加</h3>
+                <button class="modal-close" id="closeQualificationModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="qualificationForm">
+                    <input type="hidden" id="qualificationId">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationName">資格名</label>
+                                <input type="text" id="qualificationName" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationCategory">カテゴリ</label>
+                                <input type="text" id="qualificationCategory" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="qualificationDescription">説明</label>
+                        <textarea id="qualificationDescription" class="form-input" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationValidMonths">有効期間(月)</label>
+                                <input type="number" id="qualificationValidMonths" class="form-input" min="0">
+                                <span class="form-hint">0は無期限</span>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationIssuer">発行機関</label>
+                                <input type="text" id="qualificationIssuer" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelQualificationBtn">キャンセル</button>
+                <button class="btn btn-primary" id="saveQualificationBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 作業認定追加/編集モーダル -->
+    <div class="modal-overlay" id="workCertificationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="workCertificationModalTitle"><i class="fas fa-tools"></i> 作業認定追加</h3>
+                <button class="modal-close" id="closeWorkCertificationModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="workCertificationForm">
+                    <input type="hidden" id="workCertificationId">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="workCertificationName">作業名</label>
+                                <input type="text" id="workCertificationName" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="workCertificationCategory">分類</label>
+                                <input type="text" id="workCertificationCategory" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="workCertificationClassification">区分</label> 
+                                <input type="text" id="workCertificationClassification" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="workCertificationDescription">説明</label>
+                        <textarea id="workCertificationDescription" class="form-input" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="workCertificationValidMonths">有効期間(月)</label>
+                                <input type="number" id="workCertificationValidMonths" class="form-input" min="0">
+                                <span class="form-hint">0は無期限</span>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="workCertificationRequiredTraining">必要研修</label>
+                                <input type="text" id="workCertificationRequiredTraining" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelWorkCertificationBtn">キャンセル</button>
+                <button class="btn btn-primary" id="saveWorkCertificationBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSVインポートモーダル -->
+    <div class="modal-overlay" id="csvImportModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="csvImportModalTitle"><i class="fas fa-file-import"></i> CSVインポート</h3>
+                <button class="modal-close" id="closeCsvImportModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="import-info">
+                    <i class="fas fa-info-circle text-info"></i>
+                    <div>
+                        <h4 id="csvImportInfo">CSVファイルをインポート</h4>
+                        <p class="text-sm" id="csvImportDescription">CSVファイルの形式に合わせてデータをインポートします。</p>
+                    </div>
+                </div>
+                
+                <div class="file-upload-container">
+                    <div class="file-upload-area" id="csvDropArea">
+                        <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
+                        <div class="file-upload-text">CSVファイルをドラッグ＆ドロップ</div>
+                        <div class="file-upload-help">または下のボタンをクリックしてファイルを選択</div>
+                        <input type="file" id="csvImportFile" accept=".csv" class="file-upload-input">
+                    </div>
+                    
+                    <div class="file-selected-info" id="csvFileInfo" style="display: none;">
+                        <i class="fas fa-file-csv file-selected-icon"></i>
+                        <div class="file-selected-name" id="csvFileName">選択されたファイル名</div>
+                        <div class="file-selected-size" id="csvFileSize">0 KB</div>
+                        <button class="file-remove-btn" id="removeCsvFileBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="import-options">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="csvOverwriteExisting" checked>
+                        <label for="csvOverwriteExisting">既存データを上書き</label>
+                    </div>
+                    <p class="text-sm text-muted">既存のIDを持つデータが存在する場合、インポートデータで上書きします。</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" id="csvImportType" value="">
+                <button class="btn btn-secondary" id="cancelCsvImportBtn">キャンセル</button>
+                <button class="btn btn-primary" id="executeCsvImportBtn" disabled>インポート実行</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 資格割り当てモーダル -->
+    <div class="modal-overlay" id="assignQualificationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="assignQualificationModalTitle">
+                    <i class="fas fa-certificate"></i>
+                    資格の割り当て - <span id="assignQualificationEmployeeName" class="modal-employee-name-display"></span>
+                </h3>
+                <button class="modal-close" id="closeAssignQualificationModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignQualificationForm">
+                    <input type="hidden" id="assignQualificationEmployeeId">
+                    <input type="hidden" id="assignQualificationId">
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="selectQualification">資格</label>
+                        <select id="selectQualification" class="form-input" required>
+                            <option value="">資格を選択してください</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationYear">対象年度</label>
+                                <input type="number" id="qualificationYear" class="form-input" min="2000" max="2100" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationStatus">取得状況</label>
+                                <select id="qualificationStatus" class="form-input" required>
+                                    <option value="planned">計画中</option>
+                                    <option value="challenging">挑戦中</option>
+                                    <option value="acquired">取得済み</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationAcquiredDate">取得日</label>
+                                <input type="date" id="qualificationAcquiredDate" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="qualificationExpiryDate">有効期限</label>
+                                <input type="date" id="qualificationExpiryDate" class="form-input">
+                                <span class="form-hint">資格の有効期間から自動計算されます</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="qualificationAssignmentNotes">備考</label>
+                        <textarea id="qualificationAssignmentNotes" class="form-input" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAssignQualificationBtn">キャンセル</button>
+                <button class="btn btn-danger" id="deleteAssignQualificationBtn" style="display: none;">削除</button>
+                <button class="btn btn-primary" id="saveAssignQualificationBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 作業認定割り当てモーダル -->
+    <div class="modal-overlay" id="assignCertificationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="assignCertificationModalTitle">
+                    <i class="fas fa-tools"></i>
+                    作業認定の割り当て - <span id="assignCertificationEmployeeName" class="modal-employee-name-display"></span>
+                </h3>
+                <button class="modal-close" id="closeAssignCertificationModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignCertificationForm">
+                    <input type="hidden" id="assignCertificationEmployeeId">
+                    <input type="hidden" id="assignCertificationId">
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="selectCertification">作業認定</label>
+                        <select id="selectCertification" class="form-input" required>
+                            <option value="">作業認定を選択してください</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="certificationYear">対象年度</label>
+                                <input type="number" id="certificationYear" class="form-input" min="2000" max="2100" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="certificationLevel">習得レベル</label>
+                                <select id="certificationLevel" class="form-input" required>
+                                    <option value="planned">予定</option>
+                                    <option value="in_training">教育・訓練中</option>
+                                    <option value="supervised">指導下作業</option>
+                                    <option value="independent">一人作業可能</option>
+                                    <option value="expert_trainer">一人作業可能、教育も可</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="certificationAcquiredDate">取得日</label>
+                                <input type="date" id="certificationAcquiredDate" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="certificationExpiryDate">有効期限</label>
+                                <input type="date" id="certificationExpiryDate" class="form-input">
+                                <span class="form-hint">認定の有効期間から自動計算されます</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="certificationAssignmentNotes">備考</label>
+                        <textarea id="certificationAssignmentNotes" class="form-input" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAssignCertificationBtn">キャンセル</button>
+                <button class="btn btn-danger" id="deleteAssignCertificationBtn" style="display: none;">削除</button>
+                <button class="btn btn-primary" id="saveAssignCertificationBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ツールチップ -->
+    <div class="tooltip" id="evaluationTooltip">
+        <!-- Content injected by JS -->
+    </div>
+    <!-- マトリクス分布用ツールチップ -->
+    <div class="tooltip matrix-tooltip" id="matrixTooltip">
+        <!-- Content injected by JS -->
+    </div>
+
+    <!-- 通知 -->
+    <div class="notification notification-success hidden" id="notification">
+        <div class="notification-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">完了</div>
+            <div class="notification-message">データが正常に保存されました。</div>
+        </div>
+        <button class="notification-close" id="closeNotification">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- JavaScript ファイル -->
+    <script src="scripts/managers/certification.js"></script>
+    <script src="scripts/managers/employee.js"></script>
+    <script src="scripts/managers/import-export.js"></script>
+    <script src="scripts/managers/master.js"></script>
+    <script src="scripts/managers/setting.js"></script>
+    <script src="scripts/managers/settings-ui.js"></script>
+    <script src="scripts/managers/export-manager.js"></script>
+    <script src="scripts/managers/print-manager.js"></script>
+
+    <!-- UI コンポーネント -->
+    <script src="scripts/ui/ui-core.js"></script>
+    <script src="scripts/ui/ui-visualization.js"></script>
+    <script src="scripts/ui/ui-visualization-adapter.js"></script>
+    <script src="scripts/ui/ui-forms.js"></script>
+    <script src="scripts/ui/ui-manager.js"></script>
+
+    <!-- コアコンポーネント -->
+    <script src="scripts/core/app-settings-core.js"></script>
+    <script src="scripts/core/data.js"></script>
+    <script src="scripts/core/sample.js"></script>
+    <script src="scripts/core/app-controller.js"></script>
+
+</body>
+</html>

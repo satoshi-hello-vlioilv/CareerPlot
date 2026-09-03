@@ -1,0 +1,861 @@
+/* 
+ * styles/certification.css (重複排除版)
+ * 資格・作業認定管理機能のスタイル
+ */
+
+/* 管理画面のコントロール部分 */
+.qualification-management-controls,
+.certification-management-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+/* テーブルコンテナのスクロール設定 */
+.qualification-table-container,
+.certification-table-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* 検索ボックス */
+.search-container {
+    position: relative;
+    width: 300px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-normal);
+}
+
+.search-container .fa-search {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+/* ステータスバッジ */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+}
+
+.status-valid {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.status-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #e6ac00;
+}
+
+.status-expired {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+/* フォームヒント */
+.form-hint {
+    display: block;
+    font-size: var(--font-size-small);
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* 資格・認定管理コントロール */
+.qualification-controls,
+.certification-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+/* インポートオプション */
+.import-options {
+    margin-top: var(--spacing-md);
+}
+
+/* タブコンテンツ調整 */
+#employee-qualifications-tab,
+#employee-certifications-tab {
+    padding-top: var(--spacing-md);
+}
+
+/* 情報メッセージ */
+.import-info,
+.import-warning {
+    display: flex;
+    align-items: start;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    background-color: rgba(0, 123, 255, 0.1);
+    border: 1px solid rgba(0, 123, 255, 0.2);
+}
+
+.import-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.import-info i,
+.import-warning i {
+    font-size: 24px;
+    margin-right: var(--spacing-md);
+    color: var(--info-color);
+}
+
+.import-warning i {
+    color: var(--danger-color);
+}
+
+/* 詳細ボタン */
+.btn-table-action.info {
+    background-color: #17a2b8;
+}
+
+.btn-table-action.info:hover {
+    background-color: #138496;
+}
+
+/* --- 星取表スタイル --- */
+.star-chart-container {
+    width: 100%;
+    overflow: auto; /* Ensure table can scroll if wider than container */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background-color: var(--base-light);
+    box-shadow: var(--box-shadow-sm);
+    max-height: calc(100vh - 220px); /* Adjust based on header/toolbar height */
+}
+
+.star-chart-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; 
+    font-size: var(--font-size-small);
+}
+
+.star-chart-table th,
+.star-chart-table td {
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    text-align: center;
+    white-space: nowrap; /* Default to nowrap for employee names */
+}
+
+.star-chart-table th {
+    background-color: var(--main-primary);
+    color: var(--text-on-primary);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2; 
+}
+
+/* 縦軸ヘッダー（資格/作業認定名） */
+.star-chart-table th.star-chart-header-axis {
+    position: sticky;
+    left: 0;
+    z-index: 3; 
+    width: 280px; /* 縦軸の幅を広げる */
+    min-width: 250px;
+    text-align: left;
+    padding-left: var(--spacing-md);
+    background-color: var(--main-primary-dark); 
+    white-space: normal; /* 長い場合に折り返す */
+}
+
+/* 縦軸の項目名セル */
+.star-chart-table td.star-chart-item-name {
+    position: sticky;
+    left: 0;
+    background-color: var(--base-light-gray);
+    font-weight: 500;
+    text-align: left;
+    padding-left: var(--spacing-md);
+    white-space: normal; /* 長い場合に折り返す */
+    min-width: 250px;
+    width: 280px; /* 縦軸の幅を広げる */
+    z-index: 1;
+    line-height: 1.3; /* 折り返し時の行間調整 */
+}
+
+.star-chart-table td.star-chart-item-name.cell-hover-active,
+.star-chart-table td.star-chart-item-name:hover {
+    background-color: #FF7F50 !important; /* コーラルオレンジ */
+    color: white !important;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+/* 星取表の横軸従業員名ヘッダーのホバー/アクティブ状態（オレンジ系） */
+.star-chart-table th.star-chart-header-employee.cell-hover-active {
+    background-color: #FF6347 !important; /* トマトオレンジ */
+    transition: background-color 0.1s ease-in-out;
+}
+
+
+/* 横軸ヘッダー（従業員名） - 縦書き対応 */
+.star-chart-header-employee {
+    min-width: 40px; /* 縦書きなので幅を狭く */
+    max-width: 60px;
+    height: 150px; /* 名前表示のための十分な高さ */
+    writing-mode: vertical-rl; /* 右から左への縦書き */
+    text-orientation: mixed;
+    white-space: nowrap; /* 名前が折り返さないように */
+    text-align: center; /* 中央揃え */
+    vertical-align: middle; /* 中央揃え */
+    padding: var(--spacing-sm) 2px; /* パディング調整 */
+    overflow: hidden; /* はみ出し非表示 */
+    text-overflow: ellipsis; /* はみ出し時に省略記号 */
+}
+
+/* 星取表のデータセル */
+.star-chart-cell {
+    font-size: var(--font-size-xs); /* シンボルのサイズ調整 */
+    font-weight: bold;
+    padding: 0;
+    line-height: 1; /* シンボルの縦位置調整 */
+    align-items: center; /* 中身を垂直方向の中央に配置します */
+    justify-content: center; /* 中身を水平方向の中央に配置します */
+    min-width: 60px; /* セルの最小幅 */
+}
+
+.star-chart-table tbody tr:nth-child(even) {
+    background-color: rgba(248, 249, 250, 0.5);
+}
+/* 既存の tr:hover スタイルはデータセルのみに適用されるように調整 */
+.star-chart-table tbody tr:hover td:not(.star-chart-item-name):not(.cell-hover-active) { 
+    background-color: rgba(233, 236, 239, 0.7);
+}
+.star-chart-table tbody tr:hover td.star-chart-item-name {
+    background-color: var(--base-medium-gray); /* 縦軸項目名ホバー */
+    color: var(--text-on-primary);
+}
+
+/* 星取表の縦軸項目内の詳細情報用コンテナ */
+.star-chart-item-details {
+    display: flex;
+    gap: 2px; /* カード間の間隔 */
+    margin-top: 2px; /* 名前との間隔 */
+    flex-wrap: wrap; /* カードが多ければ折り返す */
+}
+
+/* 星取表の縦軸項目内の分類・区分バッジ (evaluation-cardをベースにする) */
+.evaluation-card.item-category-badge,
+.evaluation-card.item-classification-badge {
+    font-size: calc(var(--font-size-xs) * 0.9); /* 少し小さめ */
+    padding: 1px 5px;
+    border-radius: var(--border-radius-sm);
+    font-weight: normal;
+    line-height: 1.2;
+}
+
+.evaluation-card.item-category-badge {
+    background-color: rgba(var(--semantic-info-rgb), 0.15); /* 例: 情報系カラー */
+    border: 1px solid rgba(var(--semantic-info-rgb), 0.4);
+    color: var(--text-color);
+}
+
+.evaluation-card.item-classification-badge {
+    background-color: rgba(var(--base-medium-gray-rgb), 0.2); /* 例: グレー系 */
+    border: 1px solid rgba(var(--base-medium-gray-rgb), 0.5);
+    color: var(--text-color);
+}
+/**
+ * 星取表専用スタイル
+ * メインCSSファイルに追加してください
+ */
+
+/* =============================================================================
+   星取表コンテナ
+   ============================================================================= */
+
+.star-chart-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: var(--spacing-md);
+}
+
+.star-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--base-light-gray);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--base-medium-gray);
+}
+
+.star-chart-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--base-dark-gray);
+}
+
+.star-chart-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+/* =============================================================================
+   凡例
+   ============================================================================= */
+
+.star-chart-legend {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    color: var(--base-dark-gray);
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.status-indicator.valid {
+    background-color: var(--success-color);
+}
+
+.status-indicator.warning {
+    background-color: var(--warning-color);
+}
+
+.status-indicator.expired {
+    background-color: var(--error-color);
+}
+
+.status-indicator.none {
+    background-color: var(--base-light-gray);
+}
+
+/* =============================================================================
+   統計情報
+   ============================================================================= */
+
+.star-chart-stats {
+    padding: var(--spacing-md);
+    background: white;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--base-medium-gray);
+}
+
+.stats-summary {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    background: var(--base-light-gray);
+    min-width: 80px;
+}
+
+.stat-item.valid {
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid var(--success-color);
+}
+
+.stat-item.warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid var(--warning-color);
+}
+
+.stat-item.expired {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--error-color);
+}
+
+.stat-label {
+    font-size: var(--font-size-small);
+    color: var(--base-dark-gray);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--base-black);
+}
+
+/* =============================================================================
+   星取表テーブル
+   ============================================================================= */
+
+.star-chart-table-container {
+    flex: 1;
+    overflow: auto;
+    background: white;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--base-medium-gray);
+    position: relative;
+}
+
+.star-chart-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-small);
+}
+
+.star-chart-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+}
+
+.star-chart-table th,
+.star-chart-table td {
+    border: 1px solid var(--base-medium-gray);
+    padding: var(--spacing-xs) 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* ヘッダースタイル */
+.employee-header,
+.employee-subheader {
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    background: var(--base-light-gray);
+    font-weight: bold;
+    min-width: 120px;
+    max-width: 120px;
+    padding: var(--spacing-sm);
+}
+
+.category-header {
+    background: var(--primary-color);
+    color: white;
+    font-weight: bold;
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-small);
+}
+
+.item-header {
+    background: var(--base-light-gray);
+    font-weight: 500;
+    padding: var(--spacing-xs);
+    min-width: 60px;
+    max-width: 80px;
+    word-wrap: break-word;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.item-header .classification {
+    display: block;
+    color: var(--base-gray);
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+/* データセルスタイル */
+.employee-name {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: white;
+    text-align: left;
+    padding: var(--spacing-sm);
+    font-weight: 500;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-right: 2px solid var(--base-medium-gray);
+}
+
+.status-cell {
+    width: 40px;
+    height: 32px;
+    padding: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.status-cell:hover {
+    background-color: var(--base-light-gray);
+    transform: scale(1.1);
+    z-index: 3;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.status-cell.valid {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success-color);
+}
+
+.status-cell.warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: var(--warning-color);
+}
+
+.status-cell.expired {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: var(--error-color);
+}
+
+.status-cell.none {
+    background-color: transparent;
+    color: var(--base-gray);
+}
+
+.status-cell i {
+    font-size: 12px;
+}
+
+.not-acquired {
+    color: var(--base-gray);
+    font-size: 14px;
+}
+
+.empty-message {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--base-dark-gray);
+    font-style: italic;
+}
+
+/* =============================================================================
+   カテゴリ別統計
+   ============================================================================= */
+
+.category-stats {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: white;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--base-medium-gray);
+}
+
+.category-stats h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--base-dark-gray);
+}
+
+.category-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.category-stat-card {
+    padding: var(--spacing-md);
+    background: var(--base-light-gray);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--base-medium-gray);
+}
+
+.category-stat-card h5 {
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--base-dark-gray);
+    font-size: var(--font-size-normal);
+}
+
+.category-stat-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.stat-detail {
+    font-size: var(--font-size-small);
+    padding: 2px 0;
+}
+
+.stat-detail.valid {
+    color: var(--success-color);
+}
+
+.stat-detail.warning {
+    color: var(--warning-color);
+}
+
+.stat-detail.expired {
+    color: var(--error-color);
+}
+
+/* =============================================================================
+   詳細モーダル
+   ============================================================================= */
+
+.star-chart-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.star-chart-detail-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.star-chart-detail-modal {
+    position: relative;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: var(--spacing-md);
+    z-index: 1001;
+}
+
+.detail-header {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--base-medium-gray);
+    background: var(--base-light-gray);
+}
+
+.detail-header h4 {
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--base-dark-gray);
+}
+
+.detail-item-name {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.detail-content {
+    padding: var(--spacing-md);
+}
+
+.assignment-info {
+    margin-bottom: var(--spacing-md);
+}
+
+.assignment-info h5 {
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--base-dark-gray);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    margin-bottom: var(--spacing-sm);
+}
+
+.status-badge.valid {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.status-badge.warning {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.status-badge.expired {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.assignment-details p {
+    margin: var(--spacing-xs) 0;
+    font-size: var(--font-size-small);
+}
+
+.assignment-history {
+    border-top: 1px solid var(--base-medium-gray);
+    padding-top: var(--spacing-md);
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.history-item {
+    padding: var(--spacing-sm);
+    background: var(--base-light-gray);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-small);
+}
+
+.history-date {
+    font-weight: 500;
+    color: var(--base-dark-gray);
+}
+
+.history-expiry {
+    margin-left: var(--spacing-sm);
+    color: var(--base-gray);
+}
+
+.history-notes {
+    display: block;
+    margin-top: var(--spacing-xs);
+    color: var(--base-dark-gray);
+}
+
+.no-assignment {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--base-gray);
+}
+
+.detail-actions {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--base-medium-gray);
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+}
+
+/* =============================================================================
+   ローディング・エラー表示
+   ============================================================================= */
+
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--base-gray);
+}
+
+.loading-indicator i {
+    font-size: 2em;
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--error-color);
+    text-align: center;
+}
+
+.error-message i {
+    font-size: 2em;
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-detail {
+    font-size: var(--font-size-small);
+    color: var(--base-gray);
+    margin-top: var(--spacing-sm);
+}
+
+/* =============================================================================
+   レスポンシブ対応
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    .star-chart-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: stretch;
+    }
+    
+    .star-chart-legend {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+    
+    .stats-summary {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+    
+    .category-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .employee-header,
+    .employee-subheader,
+    .employee-name {
+        min-width: 100px;
+        max-width: 100px;
+    }
+    
+    .item-header {
+        min-width: 50px;
+        max-width: 60px;
+        font-size: 10px;
+    }
+    
+    .status-cell {
+        width: 35px;
+        height: 28px;
+    }
+}
+
+/* =============================================================================
+   印刷対応
+   ============================================================================= */
+
+@media print {
+    .star-chart-detail-overlay {
+        display: none !important;
+    }
+    
+    .star-chart-table {
+        font-size: 8pt;
+    }
+    
+    .star-chart-table-container {
+        overflow: visible;
+        border: none;
+    }
+    
+    .status-cell:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
