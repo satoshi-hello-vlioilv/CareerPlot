@@ -1122,36 +1122,53 @@ header h1 i {
     line-height: 1.2;
 }
 
-/* 従業員カードのフレックス化（画像対応） */
+/* 従業員カードの写真・アバター（レイアウト自体は components.css の .employee-card 側で定義） */
 .employee-card {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 8px !important;
-    padding: 6px 8px !important;
+    padding: 5px 6px !important;
+}
+
+/* 上段：写真(またはアバター)と氏名を横並びにする。
+   バッジは下段で全幅を使えるため、縦積みよりカード高さを抑えられる。 */
+.employee-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.employee-card-header .employee-card-label {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.employee-card-photo,
+.employee-card-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
 }
 
 .employee-card-photo {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
     object-fit: cover;
-    border: 1px solid var(--border-color);
     background-color: var(--base-light);
-    flex-shrink: 0;
 }
 
-.employee-card-photo-placeholder {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background-color: var(--base-light-gray);
-    border: 1px solid var(--border-color);
+/* 写真未登録者のアバター:
+   氏名の頭文字を表示する。色は意味を持たない中間色に統一し、
+   バッジの色（グレード・契約形態など）が持つ意味情報と競合させない。 */
+.employee-card-avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--base-medium-gray);
-    flex-shrink: 0;
-    font-size: 1.2em;
+    background-color: var(--base-light);
+    color: var(--text-muted);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
 }
 
 .employee-card-content {

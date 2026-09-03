@@ -599,7 +599,7 @@ class AppData {
     }
 
     // データエクスポート
-    exportData(exportMode = 'all') {
+    async exportData(exportMode = 'all') {
         try {
             let exportData;
             let fileNamePrefix = '人事評定_全データ';
@@ -654,11 +654,6 @@ class AppData {
             }
             
             const jsonData = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([jsonData], { type: 'application/json;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
             
             // 日付形式を日本語的なYYYY-MM-DD形式に変更
             const now = new Date();
@@ -666,16 +661,23 @@ class AppData {
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             const formattedDate = `${year}-${month}-${day}`;
+            const baseName = `${fileNamePrefix}_${formattedDate}`;
             
-            a.download = `${fileNamePrefix}_${formattedDate}.json`;
+            // ZIP形式で出力（JSONをそのまま格納するため、解凍すれば従来と同じ内容を参照できる）
+            const blob = await ZipArchive.create([{ name: `${baseName}.json`, content: jsonData }]);
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseName}.zip`;
             
             // アンカー要素の追加とクリックをセットで行い、すぐに削除
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             
-            // URL オブジェクトの解放
-            URL.revokeObjectURL(url);
+            // URL オブジェクトの解放（保存処理が始まる前に解放するとファイル名や内容が欠けるため遅延させる）
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
             
             return true;
         } catch (e) {

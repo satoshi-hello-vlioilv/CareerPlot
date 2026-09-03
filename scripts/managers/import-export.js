@@ -49,9 +49,10 @@ class ImportExportManager {
     
     // ファイル処理のヘルパー関数
     const handleFileSelection = (file) => {
-      // JSONファイルの検証
-      if (!file.type.includes('json') && !file.name.toLowerCase().endsWith('.json')) {
-        this.appUI.showNotification('error', 'ファイル形式エラー', 'JSONファイルのみアップロード可能です。');
+      // 受け入れ形式の検証（ZIP形式。旧形式のJSONも読み込み可能）
+      const lowerName = file.name.toLowerCase();
+      if (!lowerName.endsWith('.zip') && !lowerName.endsWith('.json')) {
+        this.appUI.showNotification('error', 'ファイル形式エラー', 'ZIPファイル（または旧形式のJSONファイル）を選択してください。');
         return false;
       }
       
@@ -193,21 +194,51 @@ class ImportExportManager {
   /**
    * インポート処理
    */
+  /**
+   * 読み込んだファイルからインポート用のJSONテキストを取り出す
+   * ZIP形式は内部のJSONを展開し、旧形式のJSONはそのままテキストとして扱う
+   * @param {ArrayBuffer} buffer 読み込んだファイル内容
+   * @param {string} fileName ファイル名（形式判定の補助）
+   * @returns {Promise<string>} JSONテキスト
+   */
+  async extractImportText(buffer, fileName) {
+    const bytes = new Uint8Array(buffer);
+
+    if (ZipArchive.isZip(bytes)) {
+      const files = await ZipArchive.read(bytes);
+      const jsonFiles = files.filter(f => f.name.toLowerCase().endsWith('.json'));
+      if (jsonFiles.length === 0) {
+        throw new Error('ZIP内にデータファイル（.json）が見つかりません。');
+      }
+      if (jsonFiles.length > 1) {
+        throw new Error('ZIP内にデータファイルが複数あります。1つだけ含むZIPを指定してください。');
+      }
+      return jsonFiles[0].text;
+    }
+
+    if (fileName.toLowerCase().endsWith('.zip')) {
+      throw new Error('ZIPファイルとして読み込めませんでした。ファイルが破損している可能性があります。');
+    }
+
+    // 旧形式（JSONファイル）
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
   handleImportData() {
     // 現在のファイル入力要素を使用
     const fileInput = this.currentFileInput || document.getElementById('importFile');
     const file = fileInput?.files?.[0];
     
     if (!file) {
-      this.appUI.showNotification('warning', 'ファイル未選択', 'インポートするJSONファイルを選択してください。');
+      this.appUI.showNotification('warning', 'ファイル未選択', 'インポートするファイルを選択してください。');
       return;
     }
     
     const reader = new FileReader();
     
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
-        const jsonText = e.target.result;
+        const jsonText = await this.extractImportText(e.target.result, file.name);
         const data = JSON.parse(jsonText);
         
         const exportType = data.metadata?.exportType || 'all';
@@ -244,7 +275,7 @@ class ImportExportManager {
           this.executeImport(jsonText, exportType, file.name);
         }
       } catch (error) {
-        this.appUI.showNotification('error', 'ファイル解析エラー', 'JSONファイルの形式が正しくありません。\n\n' + error.message);
+        this.appUI.showNotification('error', 'ファイル解析エラー', 'ファイルの形式が正しくありません。\n\n' + error.message);
         this.clearFileSelection();
       }
     };
@@ -254,7 +285,8 @@ class ImportExportManager {
       this.clearFileSelection();
     };
     
-    reader.readAsText(file, 'UTF-8');
+    // ZIP/JSONのどちらでも扱えるようバイナリとして読み込む
+    reader.readAsArrayBuffer(file);
   }
   
   /**
@@ -388,8 +420,8 @@ class ImportExportManager {
       exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> エクスポート中...';
       
       // 非同期でエクスポート処理（UI応答性確保）
-      setTimeout(() => {
-        const success = this.appData.exportData(exportType);
+      setTimeout(async () => {
+        const success = await this.appData.exportData(exportType);
         
         // ボタンを元に戻す
         exportBtn.disabled = false;

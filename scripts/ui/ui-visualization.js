@@ -1989,6 +1989,16 @@ class AppUICharts {
         return employee.photos.find(p => p.id === employee.displayPhotoId) || employee.photos[0];
     }
 
+    /**
+     * 写真未登録者のアバターに表示する頭文字を取得する
+     * @param {Object} employee 社員データ
+     * @returns {string} 氏名の先頭1文字（取得できない場合は「?」）
+     */
+    getDisplayInitial(employee) {
+        const source = (employee?.lastName || employee?.name || '').trim();
+        return source ? Array.from(source)[0] : '?';
+    }
+
     // 社員カード作成メソッドの修正（バッジデザイン統一対応）
     createEmployeeCard(container, employee, displayOptions) {
         const card = document.createElement('div');
@@ -1997,12 +2007,7 @@ class AppUICharts {
         // Tooltip shows name and the evaluation used for placement
         card.title = `${employee.name} (${employee.evaluation ? `${employee.evaluation.year}年:${employee.evaluation.grade}` : '評価無'})`;
 
-        // Ensure card has all necessary styles directly applied
-        // CSSクラス(.employee-card)側でFlexbox定義していますが、念のためインラインでも設定
-        card.style.display = 'flex';
-        card.style.alignItems = 'flex-start';
-        card.style.gap = '8px';
-        card.style.padding = '6px 8px';
+        // レイアウト(flex/padding)は .employee-card 側のCSSに集約し、ここでは配色などのみ指定する
         card.style.borderRadius = 'var(--border-radius-sm)';
         card.style.marginBottom = '2px';
         card.style.fontSize = 'var(--font-size-xs)';
@@ -2011,12 +2016,15 @@ class AppUICharts {
         card.style.position = 'relative';
         card.style.cursor = 'pointer';
         card.style.transition = 'transform var(--transition-fast), box-shadow var(--transition-fast)';
-        card.style.maxWidth = '100%';
         card.style.overflow = 'visible';
         card.style.lineHeight = '1.3';
         card.style.border = '1px solid var(--border-color)';
 
-        // --- 顔写真の表示（表示オプションで切替可能。未指定時は従来通り表示） ---
+        // --- 上段：顔写真(またはアバター)と氏名 ---
+        const header = document.createElement('div');
+        header.className = 'employee-card-header';
+
+        // 顔写真は表示オプションで切替可能（未指定時は従来通り表示）
         const showPhoto = displayOptions.showPhoto !== false;
         if (showPhoto) {
             const displayPhoto = this.getDisplayPhoto(employee);
@@ -2024,31 +2032,26 @@ class AppUICharts {
                 const img = document.createElement('img');
                 img.className = 'employee-card-photo';
                 img.src = displayPhoto.dataUrl;
-                card.appendChild(img);
+                header.appendChild(img);
             } else {
-                // デフォルトアイコン表示
-                const iconDiv = document.createElement('div');
-                iconDiv.className = 'employee-card-photo-placeholder';
-                iconDiv.innerHTML = '<i class="fas fa-user"></i>';
-                card.appendChild(iconDiv);
+                // 写真未登録：氏名の頭文字アバターを表示（空のアイコンより識別しやすい）
+                const avatar = document.createElement('div');
+                avatar.className = 'employee-card-avatar';
+                avatar.textContent = this.getDisplayInitial(employee);
+                header.appendChild(avatar);
             }
         }
-
-        // --- コンテンツコンテナ ---
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'employee-card-content';
 
         // Employee Name Label
         const label = document.createElement('span');
         label.className = 'employee-card-label';
         label.textContent = employee.name;
-        label.style.display = 'block';
-        label.style.overflow = 'hidden';
-        label.style.textOverflow = 'ellipsis';
-        label.style.whiteSpace = 'nowrap';
-        label.style.fontWeight = '500';
-        label.style.marginBottom = '3px';
-        card.appendChild(label);
+        header.appendChild(label);
+        card.appendChild(header);
+
+        // --- 下段：バッジ（カード幅いっぱいを使う） ---
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'employee-card-content';
 
         // Badges Container
         const badgesContainer = document.createElement('div');

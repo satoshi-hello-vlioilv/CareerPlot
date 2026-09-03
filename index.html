@@ -490,7 +490,8 @@
                     <div class="settings-section-content">
                         <div class="settings-panel">
                             <h3><i class="fas fa-file-export"></i> データエクスポート</h3>
-                            <p>現在のデータをバックアップまたは他の環境へ移行するためにエクスポートします。</p>
+                            <p>現在のデータをバックアップまたは他の環境へ移行するためにエクスポートします。<br>
+                            <span class="text-sm text-muted">ZIP形式（圧縮）で出力されます。解凍すると中身はJSONファイル1つです。</span></p>
                             
                             <div class="export-options">
                                 <h5 class="mb-xs">エクスポート種類</h5>
@@ -524,9 +525,9 @@
                             <div class="file-upload-container">
                                 <div class="file-upload-area" id="fileDropArea">
                                     <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
-                                    <div class="file-upload-text">JSONファイルをドラッグ＆ドロップ</div>
-                                    <div class="file-upload-help">または下のボタンをクリックしてファイルを選択</div>
-                                    <input type="file" id="importFile" accept=".json" class="file-upload-input">
+                                    <div class="file-upload-text">ZIPファイルをドラッグ＆ドロップ</div>
+                                    <div class="file-upload-help">または下のボタンをクリックしてファイルを選択（旧形式のJSONファイルも読み込めます）</div>
+                                    <input type="file" id="importFile" accept=".zip,.json" class="file-upload-input">
                                 </div>
                                 
                                 <div class="file-selected-info" id="fileInfo" style="display: none;">
@@ -1679,6 +1680,7 @@
 
     <!-- コアコンポーネント -->
     <script src="scripts/core/app-settings-core.js"></script>
+    <script src="scripts/core/zip-archive.js"></script>
     <script src="scripts/core/data.js"></script>
     <script src="scripts/core/sample.js"></script>
     <script src="scripts/core/app-controller.js"></script>

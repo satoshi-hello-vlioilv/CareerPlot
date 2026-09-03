@@ -585,7 +585,10 @@
     cursor: pointer;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
     flex: 0 0 auto !important;
+    /* 上段(写真+氏名)と下段(バッジ)の2段構成 */
+    display: flex !important;
     flex-direction: column !important;
+    gap: 4px !important;
     max-width: 200px !important;
     overflow: hidden !important;
     line-height: 1.3;
