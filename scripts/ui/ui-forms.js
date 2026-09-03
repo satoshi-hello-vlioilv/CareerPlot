@@ -28,8 +28,10 @@ class UIForms {
     processImageFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
+            reader.onerror = () => resolve(null); // 読み込み失敗時も必ず解決させる
             reader.onload = (e) => {
                 const img = new Image();
+                img.onerror = () => resolve(null); // 破損画像などで処理が止まらないようにする
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const MAX_SIZE = 400; // 保存サイズを最大400pxに制限
@@ -134,12 +136,14 @@ class UIForms {
     async addPhotoFiles(files) {
         if (!files || files.length === 0) return 0;
         let addedCount = 0;
+        let failedCount = 0;
 
         for (const file of Array.from(files)) {
             if (!file || !file.type || !file.type.startsWith('image/')) continue;
 
             try {
                 const dataUrl = await this.processImageFile(file);
+                if (!dataUrl) { failedCount++; continue; }
                 const newPhotoId = 'photo_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
                 this.currentEmployeePhotos.push({
                     id: newPhotoId,
@@ -151,12 +155,16 @@ class UIForms {
                 }
                 addedCount++;
             } catch (err) {
+                failedCount++;
                 console.error('Image processing error:', err);
             }
         }
 
         if (addedCount > 0) {
             this.renderPhotoThumbnails();
+        }
+        if (failedCount > 0) {
+            this.uiManager.showNotification('error', '写真の読み込み失敗', `${failedCount}件の画像を読み込めませんでした。`);
         }
         return addedCount;
     }
@@ -207,8 +215,6 @@ class UIForms {
             const addedCount = await this.addPhotoFiles(imageFiles);
             if (addedCount > 0) {
                 this.uiManager.showNotification('success', '写真を登録しました', `クリップボードから${addedCount}枚の画像を追加しました。`);
-            } else {
-                this.uiManager.showNotification('error', '写真の登録に失敗', '貼り付けた画像を読み込めませんでした。');
             }
         };
 

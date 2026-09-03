@@ -7,7 +7,10 @@ class AppController {
         this.appData = new AppData();
         this.appUI = new AppUI(this);
         this.appUICharts = new AppUICharts(this.appUI);
-        this.appUIForms = new UIForms(this.appUI);
+        // UIFormsはAppUI側で生成済みのインスタンスを共有する。
+        // 別インスタンスを生成すると、モーダル操作側(appUI.forms)と保存側(appUIForms)で
+        // 状態(顔写真など)が分断され、入力内容が保存されない。
+        this.appUIForms = this.appUI.forms;
         this.selectedEmployeeIds =[];
 
         this.appUI.appUICharts = this.appUICharts;
@@ -1260,6 +1263,11 @@ class AppController {
             } else { // Add new employee
                 const newId = this.appData.addEmployee(employeeData);
                 success = !!newId; // Check if addEmployee returned a valid ID
+                // 追加直後の社員を表示対象に含める
+                // （選択されないままだとチャートにも評価追加の対象社員にも現れず、追加後の導線が途切れるため）
+                if (success && !this.selectedEmployeeIds.includes(newId)) {
+                    this.selectedEmployeeIds.push(newId);
+                }
                 message = success ? `「${displayName}」さん登録完了` : "社員追加失敗";
             }
 

@@ -245,8 +245,9 @@ class UIManager {
             }
         }
         
-        // 通知を表示
+        // 通知を表示（.notification は既定で opacity:0/visibility:hidden のため .visible が必須）
         notification.classList.remove('hidden');
+        notification.classList.add('visible');
         
         // 既存のタイムアウトをクリア
         if (this.notificationTimeout) {
@@ -255,6 +256,7 @@ class UIManager {
         
         // 通知を自動的に非表示にするタイマー設定
         this.notificationTimeout = setTimeout(() => {
+            notification.classList.remove('visible');
             notification.classList.add('hidden');
             this.notificationTimeout = null;
         }, duration);
@@ -263,6 +265,7 @@ class UIManager {
         const closeBtn = notification.querySelector('.notification-close');
         if (closeBtn) {
             closeBtn.onclick = () => {
+                notification.classList.remove('visible');
                 notification.classList.add('hidden');
                 if (this.notificationTimeout) {
                     clearTimeout(this.notificationTimeout);
@@ -644,6 +647,7 @@ class UIManager {
         document.getElementById('closeNotification')?.addEventListener('click', () => {
             const notification = document.getElementById('notification');
             if (notification) {
+                notification.classList.remove('visible');
                 notification.classList.add('hidden');
                 if (this.notificationTimeout) {
                     clearTimeout(this.notificationTimeout);

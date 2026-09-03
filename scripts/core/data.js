@@ -463,6 +463,9 @@ class AppData {
                 position: employeeData.position || '', // 文字列として保存
                 contractType: employeeData.contractType || 'full-time', // 追加: 契約形態
                 notes: employeeData.notes || '',
+                // 顔写真（データ層側でコピーを保持し、フォーム側の配列と共有しない）
+                photos: Array.isArray(employeeData.photos) ? [...employeeData.photos] : [],
+                displayPhotoId: employeeData.displayPhotoId || null,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
@@ -540,6 +543,9 @@ class AppData {
                 position: employeeData.position !== undefined ? employeeData.position : existingEmployee.position,
                 contractType: employeeData.contractType || existingEmployee.contractType,
                 notes: employeeData.notes !== undefined ? employeeData.notes : existingEmployee.notes,
+                // 顔写真（未指定なら既存を維持）
+                photos: Array.isArray(employeeData.photos) ? [...employeeData.photos] : (existingEmployee.photos || []),
+                displayPhotoId: employeeData.displayPhotoId !== undefined ? employeeData.displayPhotoId : (existingEmployee.displayPhotoId || null),
                 updatedAt: new Date().toISOString()
             };
             
