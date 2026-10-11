@@ -7,136 +7,7 @@
     margin-bottom: var(--spacing-xs);
 }
 
-.filter-section {
-    margin-bottom: var(--spacing-md);
-    background-color: var(--base-light);
-    border-radius: var(--border-radius-md);
-    overflow: hidden;
-    box-shadow: var(--box-shadow-sm);
-    transition: box-shadow var(--transition-fast);
-    border: 1px solid var(--border-color);
-}
-
-.filter-section:hover {
-    box-shadow: var(--box-shadow-md);
-}
-
-.filter-section h3 {
-    font-size: var(--font-size-normal);
-    margin: 0;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    color: var(--text-on-primary);
-    background: var(--main-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: 500;
-    border-bottom: 1px solid var(--main-primary-dark);
-    transition: background-color var(--transition-fast);
-}
-
-.filter-section h3:hover {
-    background: var(--main-primary-dark);
-}
-
-.filter-section h3 i {
-    transition: transform var(--transition-fast);
-    font-size: 0.9em;
-}
-
-.filter-section.collapsed h3 i:last-child { /* Chevron icon */
-    transform: rotate(0deg);
-}
-.filter-section:not(.collapsed) h3 i:last-child {
-     transform: rotate(90deg);
-}
-
-.filter-section.collapsed .filter-content {
-    display: none;
-}
-
-.filter-content {
-    padding: var(--spacing-sm);
-}
-
-/* 修正後 - より具体的なセレクタと!important */
-.filter-section .filter-listbox,
-.filter-listbox {
-    width: 100%;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-xs);
-    font-size: var(--font-size-small);
-    background-color: var(--base-light);
-    min-height: 200px;
-    max-height: calc(75vh - 100px) !important;
-    overflow-y: auto;
-}
-
-.filter-listbox option {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    cursor: pointer;
-    font-size: var(--font-size-small);
-    color: var(--text-color);
-    border-radius: var(--border-radius-sm);
-}
-
-.filter-listbox option:checked {
-    background: linear-gradient(to right, rgba(80, 189, 216, 0.5), rgba(78, 170, 193, 0.3));
-    color: var(--text-color);
-    font-weight: 600;
-    border-left: 3px solid var(--main-primary);
-}
-
-.filter-listbox option:hover:not(:checked) {
-    background-color: rgba(217, 232, 48, 0.99);
-}
-
-.filter-listbox:focus {
-    outline: none;
-    border-color: var(--main-primary);
-    box-shadow: 0 0 0 2px rgba(var(--main-primary-rgb), 0.2);
-}
-
-/* 部分選択状態のフィルターセクションのスタイル - 黄色系に改善 */
-.filter-section.filtered h3 {
-    background-color: #FFF8D1; /* 淡い黄色の背景 */
-    border-left: 3px solid #F9A825; /* オレンジがかった黄色の左ボーダー */
-    padding-left: 9px; /* 通常より2px少ない（境界線の分） */
-    color: #5D4037; /* 濃い茶色のテキスト - コントラスト向上 */
-}
-
-.filter-section.filtered h3 i:not(.filter-active-indicator) {
-    /* アイコンの色も調整 */
-    color: #F57F17; /* 濃いオレンジイエロー */
-}
-
-.filter-section.filtered h3 i.filter-active-indicator {
-    color: #F57F17; /* 濃いオレンジイエロー */
-    margin-left: 4px;
-    font-size: 0.75em;
-    vertical-align: super;
-}
-
-/* フィルター数のバッジスタイル */
-.filter-count {
-    display: inline-block;
-    background-color: #F57F17; /* 濃いオレンジイエロー */
-    color: white;
-    font-size: 0.7em;
-    border-radius: 10px;
-    padding: 1px 6px;
-    margin-left: 5px;
-    vertical-align: middle;
-    font-weight: bold;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* わずかな影で浮き出し感 */
-}
-
-/* ホバー時の効果も追加 */
-.filter-section.filtered h3:hover {
-    background-color: #FFECB3; /* ホバー時は少し濃い黄色に */
-}
+/* フィルター（レール項目・パネル）は shell.css */
 
 /* チェックボックス・ラジオボタン (ツールバー内で使用) */
 .checkbox-group, .radio-group {
@@ -398,19 +269,7 @@
 .employee-select-item.selected .employee-badge.grade {}
 
 
-/* ツールバー */
-.toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    background-color: var(--base-light);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--box-shadow-sm);
-    border: 1px solid var(--border-color);
-}
-
+/* ツールバー（ビュー設定・表示項目）の配置は shell.css */
 .toolbar-section {
     display: flex;
     gap: var(--spacing-sm);
@@ -428,19 +287,6 @@
     font-size: var(--font-size-small);
     white-space: nowrap;
 }
-
-.toolbar-divider {
-    width: 1px;
-    height: 24px;
-    background-color: var(--border-color);
-    margin: 0 var(--spacing-xs);
-    align-self: center;
-    transition: opacity var(--transition-fast);
-}
-.toolbar-divider.hidden {
-     display: none;
-}
-
 
 .age-range-slider-container {
     display: flex;
@@ -667,8 +513,8 @@ td.team-chart-cell {
 .btn-action { background: none; border: none; color: var(--text-muted); border-radius: var(--border-radius-circle); width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; box-shadow: none; transition: all var(--transition-fast); cursor: pointer; }
 .btn-action i { font-size: 1em; }
 .btn-action:hover { background-color: var(--base-light-gray); color: var(--main-primary); transform: scale(1.05); }
-.header-controls .btn-action { background: rgba(255, 255, 255, 0.1); color: var(--text-on-primary); width: 32px; height: 32px; }
-.header-controls .btn-action:hover { background: rgba(255, 255, 255, 0.2); }
+.header-controls .btn-action { background: rgba(0, 0, 0, 0.16); color: var(--text-on-primary); width: auto; height: 30px; padding: 0 var(--spacing-md); gap: var(--spacing-sm); border-radius: var(--border-radius-md); font-size: var(--font-size-small); white-space: nowrap; }
+.header-controls .btn-action:hover { background: rgba(0, 0, 0, 0.28); color: var(--text-on-primary); transform: none; }
 .btn-table-action { padding: 3px; font-size: 0.9em; line-height: 1; width: 24px; height: 24px; border-radius: var(--border-radius-circle); margin: 0 1px; border: 1px solid transparent; box-shadow: none; }
 .btn-table-action i { font-size: 1em; }
 .btn-table-action.edit { background-color: var(--main-primary-light); color: var(--text-color); border-color: var(--main-primary-light); }
@@ -1270,7 +1116,7 @@ textarea.form-input { height: auto; min-height: 60px; }
 .employee-badge.contract.full-time {
     background-color: rgba(40, 167, 69, 0.15);
     border-color: rgba(40, 167, 69, 0.4);
-    color: #28a745;
+    color: #1A6E2E; /* AA: 淡緑背景上で 4.5:1 以上 */
 }
 
 /* 見習社員 */
@@ -1288,7 +1134,7 @@ textarea.form-input { height: auto; min-height: 60px; }
 .employee-badge.contract.contract {
     background-color: rgba(0, 123, 255, 0.15);
     border-color: rgba(0, 123, 255, 0.4);
-    color: #007bff;
+    color: #0059B8; /* AA: 淡青背景上で 4.5:1 以上 */
 }
 
 /* 派遣社員 */
@@ -1297,7 +1143,7 @@ textarea.form-input { height: auto; min-height: 60px; }
 .employee-badge.contract.dispatch {
     background-color: rgba(108, 117, 125, 0.15);
     border-color: rgba(108, 117, 125, 0.4);
-    color: #6c757d;
+    color: #4F575E; /* AA: 淡灰背景上で 4.5:1 以上 */
 }
 
 /* 出向社員 */
@@ -1306,7 +1152,7 @@ textarea.form-input { height: auto; min-height: 60px; }
 .employee-badge.contract.seconded {
     background-color: rgba(220, 53, 69, 0.15);
     border-color: rgba(220, 53, 69, 0.4);
-    color: #dc3545;
+    color: #B02A37; /* AA: 淡赤背景上で 4.5:1 以上 */
 }
 
 /* 退職者 */
@@ -1341,30 +1187,4 @@ textarea.form-input { height: auto; min-height: 60px; }
         font-size: 10px;
         padding: 1px 4px;
     }
-}
-
-/* 全選択解除時（選択数0）の特別なスタイル */
-.filter-section.filtered[data-filter-state="none"] h3 {
-    background-color: #FFEBEE; /* 淡いピンク系の背景 */
-    border-left: 3px solid #E91E63; /* ピンク系の左ボーダー */
-    color: #4A148C; /* 濃い紫のテキスト */
-}
-
-.filter-section.filtered[data-filter-state="none"] h3 i:not(.filter-active-indicator) {
-    color: #AD1457; /* ピンク系のアイコン色 */
-}
-
-.filter-section.filtered[data-filter-state="none"] h3 i.filter-active-indicator {
-    color: #AD1457; /* ピンク系のフィルターアイコン */
-}
-
-.filter-section.filtered[data-filter-state="none"] .filter-count {
-    background-color: #AD1457; /* ピンク系のバッジ背景 */
-    color: white;
-    font-weight: bold;
-}
-
-/* ホバー時の効果も追加 */
-.filter-section.filtered[data-filter-state="none"] h3:hover {
-    background-color: #FCE4EC; /* ホバー時は少し濃いピンクに */
 }

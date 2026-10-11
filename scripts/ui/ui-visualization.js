@@ -3,6 +3,33 @@
  * チャート描画、ツールチップ、データ可視化に関連する機能を提供
  */
 class AppUICharts {
+    /**
+     * 星取表のセル状態の定義（記号・凡例・保有扱いかどうかを1か所で管理）
+     * field: 割り当てデータ上の状態プロパティ / defaultState: 状態未設定時の扱い
+     */
+    static STAR_CHART_STATUS = {
+        qualification: {
+            field: 'status', defaultState: 'acquired', heldLabel: '取得', noneLabel: '未取得',
+            legend: ['acquired', 'planned'],
+            states: {
+                acquired: { symbol: '○', label: '取得済', className: 'status-acquired', held: true },
+                planned: { symbol: '□', label: '計画中/挑戦中', className: 'status-planned', held: false },
+                challenging: { symbol: '□', label: '計画中/挑戦中', className: 'status-planned', held: false }
+            }
+        },
+        certification: {
+            field: 'level', defaultState: 'independent', heldLabel: '認定', noneLabel: '未認定',
+            legend: ['expert_trainer', 'independent', 'supervised', 'in_training'],
+            states: {
+                expert_trainer: { symbol: '●', label: '一人作業可能、教育も可', className: 'level-expert', held: true },
+                independent: { symbol: '○', label: '一人作業可能', className: 'level-independent', held: true },
+                supervised: { symbol: '△', label: '指導下作業', className: 'level-supervised', held: true },
+                in_training: { symbol: '□', label: '教育・訓練中/予定', className: 'level-training', held: false },
+                planned: { symbol: '□', label: '教育・訓練中/予定', className: 'level-training', held: false }
+            }
+        }
+    };
+
     constructor(appUI) {
         this.appUI = appUI;
         this.appController = appUI.appController;
@@ -27,24 +54,7 @@ class AppUICharts {
 
         // Add event listener only if the default message button exists
         const focusBtn = container.querySelector('#focusEmployeeListBtn');
-        focusBtn?.addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            const listContainer = document.getElementById('employeeSelectListContainer');
-            // Expand sidebar if collapsed
-            if (sidebar?.classList.contains('collapsed')) {
-                sidebar.classList.remove('collapsed');
-                const icon = document.getElementById('sidebarCollapseBtn')?.querySelector('i');
-                if (icon) icon.className = 'fas fa-chevron-left';
-                // Optional: wait for animation before scrolling
-                // setTimeout(() => listContainer?.scrollIntoView(...), 350);
-            }
-            // Scroll to list and pulse
-            if (listContainer) {
-                listContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                listContainer.classList.add('pulse-animation');
-                setTimeout(() => listContainer.classList.remove('pulse-animation'), 1500);
-            }
-        });
+        focusBtn?.addEventListener('click', () => this.appController.shell?.openPanel('employeeRail'));
     }
 
     // 評価カード
@@ -1245,137 +1255,86 @@ class AppUICharts {
             return;
         }
         
+        const statusTable = AppUICharts.STAR_CHART_STATUS[starChartType];
+        const showCategory = displayOptions.showStarChartCategory !== false;
+        const showClassification = starChartType === 'certification' && displayOptions.showStarChartClassification !== false;
+        const legend = statusTable.legend
+            .map(key => `<span class="star-legend-item ${statusTable.states[key].className}"><b>${statusTable.states[key].symbol}</b>${statusTable.states[key].label}</span>`)
+            .join('');
+        const employeeHeld = new Map(employees.map(emp => [emp.id, 0]));
+        const columnCount = employees.length + 2; // 項目名 + 社員 + 人数
+
         let tableHtml = `<div class="star-chart-container">
                             <div class="star-chart-header">
                                 <h2>星取表 - ${itemTypeLabel}</h2>
-                                <p class="star-chart-info">セルをクリックして${itemTypeLabel}の登録・編集ができます</p>
+                                <span class="star-chart-info">セルをクリックして登録・編集</span>
+                                <span class="star-chart-legend-inline">${legend}</span>
                             </div>
                             <table class="star-chart-table">
                                 <thead>
                                     <tr>
-                                        <th class="star-chart-header-axis">${itemTypeLabel}名（分類 / 区分）</th>`;
+                                        <th class="star-chart-header-axis">${itemTypeLabel}名</th>`;
         employees.forEach(emp => {
-            tableHtml += `<th class="star-chart-header-employee" title="${emp.name}">${emp.name}</th>`;
+            tableHtml += `<th class="star-chart-header-employee" data-employee-id="${emp.id}" title="${emp.name}">${emp.name}</th>`;
         });
-        tableHtml += `          </tr>
+        tableHtml += `              <th class="star-chart-total" title="${statusTable.heldLabel}の人数">人数</th>
+                                    </tr>
                                 </thead>
                                 <tbody>`;
 
+        let currentCategory = null;
         items.forEach(item => {
-            let itemNameDisplay = item.name;
-            // 表示オプションを取得
-            const displayOptions = this.appController.getDisplayOptions();
-            let itemDetails = [];
-            // 分類・区分カード用のコンテナ
-            let detailsHtml = '<div class="star-chart-item-details">';
-            if (item.category) itemDetails.push(item.category);
-            if (starChartType === 'certification' && item.classification) itemDetails.push(item.classification);
-            
-            if (itemDetails.length > 0) {
-                itemNameDisplay += ` (${itemDetails.join(' / ')})`;
+            // 分類は見出し行にまとめ、項目名からは重複を省く
+            if (showCategory && (item.category || '') !== currentCategory) {
+                currentCategory = item.category || '';
+                tableHtml += `<tr class="star-chart-group"><td class="star-chart-item-name">${currentCategory || '(分類なし)'}</td><td colspan="${columnCount - 1}"></td></tr>`;
             }
+            const classification = showClassification && item.classification ? `<span class="star-chart-item-sub">${item.classification}</span>` : '';
+            const itemTitle = `${itemTypeLabel}: ${item.name}\n分類: ${item.category || '-'}${starChartType === 'certification' ? '\n区分: ' + (item.classification || '-') : ''}`;
+            let heldCount = 0;
 
             tableHtml += `<tr>
-                            <td class="star-chart-item-name" title="${itemTypeLabel}: ${item.name}\n分類: ${item.category || '-'}\n${starChartType === 'certification' ? '区分: ' + (item.classification || '-') : ''}">
-                                ${itemNameDisplay}
-                            </td>`;
-            
-            employees.forEach(emp => {
-                let symbol = '';
-                let cellClass = 'star-chart-cell';
-                let cellTitle = `${itemTypeLabel}: ${item.name}\n社員: ${emp.name}\n状態: `;
-                const employeeItem = employeeItemDataGetter(emp.id, item.id);
+                            <td class="star-chart-item-name" title="${itemTitle}">${item.name}${classification}</td>`;
 
-                if (starChartType === 'qualification') {
-                    if (employeeItem) {
-                        // 仮のステータス。実際のデータ構造に合わせて調整
-                        const status = employeeItem.status || 'acquired'; 
-                        switch (status) {
-                            case 'acquired':
-                                symbol = '○';
-                                cellClass += ' status-acquired';
-                                cellTitle += '取得済';
-                                break;
-                            case 'planned':
-                            case 'challenging':
-                                symbol = '□';
-                                cellClass += ' status-planned';
-                                cellTitle += '計画中/挑戦中';
-                                break;
-                            default:
-                                symbol = '○'; // 不明なステータスは取得済み扱い
-                                cellClass += ' status-acquired';
-                                cellTitle += '取得済 (不明な状態)';
-                        }
-                        cellTitle += `\n取得日: ${employeeItem.dateAcquired ? this.formatDateForDisplay(employeeItem.dateAcquired) : '-'}`;
-                        if (employeeItem.expiryDate) cellTitle += `\n有効期限: ${this.formatDateForDisplay(employeeItem.expiryDate)}`;
-                    } else {
-                        symbol = ''; 
-                        cellClass += ' status-none';
-                        cellTitle += '未取得';
-                    }
-                } else { // certification
-                    if (employeeItem) {
-                        // 仮のレベル。実際のデータ構造に合わせて調整
-                        const level = employeeItem.level || 'independent'; 
-                        switch (level) {
-                            case 'expert_trainer':
-                                symbol = '●';
-                                cellClass += ' level-expert';
-                                cellTitle += '一人作業可能、教育も可';
-                                break;
-                            case 'independent':
-                                symbol = '○';
-                                cellClass += ' level-independent';
-                                cellTitle += '一人作業可能';
-                                break;
-                            case 'supervised':
-                                symbol = '△';
-                                cellClass += ' level-supervised';
-                                cellTitle += '指導下作業';
-                                break;
-                            case 'in_training':
-                            case 'planned':
-                                symbol = '□';
-                                cellClass += ' level-training';
-                                cellTitle += '教育・訓練中/予定';
-                                break;
-                            default:
-                                symbol = '○'; // 不明なレベルは一人作業可扱い
-                                cellClass += ' level-independent';
-                                cellTitle += '一人作業可能 (不明な状態)';
-                        }
-                        cellTitle += `\n認定日: ${employeeItem.dateAcquired ? this.formatDateForDisplay(employeeItem.dateAcquired) : '-'}`;
-                        if (employeeItem.expiryDate) cellTitle += `\n有効期限: ${this.formatDateForDisplay(employeeItem.expiryDate)}`;
-                    } else {
-                        symbol = ''; 
-                        cellClass += ' status-none';
-                        cellTitle += '未認定';
-                    }
+            employees.forEach(emp => {
+                const employeeItem = employeeItemDataGetter(emp.id, item.id);
+                const stateKey = employeeItem ? (employeeItem[statusTable.field] || statusTable.defaultState) : null;
+                const state = stateKey ? (statusTable.states[stateKey] || statusTable.states[statusTable.defaultState]) : null;
+                const dateLabel = starChartType === 'qualification' ? '取得日' : '認定日';
+                let cellTitle = `${itemTypeLabel}: ${item.name}\n社員: ${emp.name}\n状態: ${state ? state.label : statusTable.noneLabel}`;
+                if (employeeItem) {
+                    cellTitle += `\n${dateLabel}: ${employeeItem.dateAcquired ? this.formatDateForDisplay(employeeItem.dateAcquired) : '-'}`;
+                    if (employeeItem.expiryDate) cellTitle += `\n有効期限: ${this.formatDateForDisplay(employeeItem.expiryDate)}`;
                 }
-                
                 cellTitle += '\n\nクリックして編集';
-                tableHtml += `<td class="${cellClass}" 
-                                data-employee-id="${emp.id}" 
-                                data-item-id="${item.id}" 
+                if (state?.held) {
+                    heldCount++;
+                    employeeHeld.set(emp.id, employeeHeld.get(emp.id) + 1);
+                }
+                tableHtml += `<td class="star-chart-cell ${state ? state.className : 'status-none'}"
+                                data-employee-id="${emp.id}"
+                                data-item-id="${item.id}"
                                 data-item-type="${starChartType}"
                                 data-assignment-id="${employeeItem ? employeeItem.id : ''}"
-                                title="${cellTitle}"
-                                style="cursor: pointer; user-select: none;">${symbol}</td>`;
+                                title="${cellTitle}">${state ? state.symbol : ''}</td>`;
             });
-            tableHtml += `</tr>`;
+            const ratio = employees.length ? Math.round(heldCount / employees.length * 100) : 0;
+            tableHtml += `<td class="star-chart-total"><span class="star-chart-bar"><i style="width:${ratio}%"></i></span>${heldCount}</td></tr>`;
         });
 
-        tableHtml += `      </tbody>
+        tableHtml += `<tr class="star-chart-summary"><td class="star-chart-item-name">${statusTable.heldLabel}数</td>`;
+        employees.forEach(emp => {
+            tableHtml += `<td>${employeeHeld.get(emp.id) || ''}</td>`;
+        });
+        tableHtml += `<td class="star-chart-total"></td></tr>
+                                </tbody>
                             </table>
                         </div>`;
-        
+
         container.innerHTML = tableHtml;
-        
+
         // セルクリックイベントリスナーを追加
         this.setupStarChartCellClickEvents(starChartType);
-        
-        this.makeStarChartHeadersSticky(); // Ensure headers are sticky after render
     }
 
     /**
@@ -1416,11 +1375,8 @@ class AppUICharts {
                 }
             });
             
-            // ホバー効果（セル + 縦軸 + 横軸の連動）
+            // ホバー効果（セル自体は CSS、縦軸・横軸の見出しはここで連動）
             cell.addEventListener('mouseenter', () => {
-                // セル自体のハイライト
-                cell.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
-                
                 // 横軸ヘッダー（従業員名）のハイライト
                 const employeeId = cell.dataset.employeeId;
                 if (employeeId) {
@@ -1438,9 +1394,6 @@ class AppUICharts {
             });
             
             cell.addEventListener('mouseleave', () => {
-                // セル自体のハイライト解除
-                cell.style.backgroundColor = '';
-                
                 // 横軸ヘッダー（従業員名）のハイライト解除
                 const employeeId = cell.dataset.employeeId;
                 if (employeeId) {
@@ -1469,32 +1422,8 @@ class AppUICharts {
         const table = document.querySelector('.star-chart-table');
         if (!table) return;
         
-        // 従業員IDに基づいて対応する列インデックスを取得
-        const headerRow = table.querySelector('thead tr');
-        if (!headerRow) return;
-        
-        const headers = headerRow.querySelectorAll('th');
-        let columnIndex = -1;
-        
-        // 従業員名ヘッダーを探す（最初のthは縦軸ラベルなので1から開始）
-        for (let i = 1; i < headers.length; i++) {
-            const header = headers[i];
-            // data-employee-idを設定していない場合は、セルから推測
-            const firstDataCell = table.querySelector(`tbody tr:first-child td:nth-child(${i + 1})`);
-            if (firstDataCell && firstDataCell.dataset.employeeId === employeeId) {
-                columnIndex = i;
-                break;
-            }
-        }
-        
-        if (columnIndex >= 0 && columnIndex < headers.length) {
-            const employeeHeader = headers[columnIndex];
-            if (highlight) {
-                employeeHeader.classList.add('cell-hover-active');
-            } else {
-                employeeHeader.classList.remove('cell-hover-active');
-            }
-        }
+        table.querySelector(`th.star-chart-header-employee[data-employee-id="${employeeId}"]`)
+            ?.classList.toggle('cell-hover-active', highlight);
     }
 
     /**
@@ -1513,26 +1442,6 @@ class AppUICharts {
         
         return `${year}/${month}/${day}`;
     }
-    /**
-        スターチャートのヘッダーを固定（スティッキー）にするためのヘルパー。
-        動的コンテンツの影響でCSSだけでは対応できない場合に必要になる可能性がある。
-        現時点ではCSSで対応できていると想定しているが、念のためプレースホルダーとして残しておく。
-     */
-    makeStarChartHeadersSticky() {
-        const table = document.querySelector('.star-chart-table');
-        if (!table) return;
-
-        // これは基本的な例です。より堅牢な対応にはオフセットの計算が必要になるかもしれません。
-        // ほとんどのモダンブラウザでは、CSS の `position: sticky` で十分です。
-        // もし問題が発生した場合は、ここで JavaScript ベースの「スティッキー」動作を実装することもできます。
-        // 例：
-        // const header = table.querySelector('thead');
-        // if (header) {
-        //     // スクロール時にヘッダーの位置を調整するロジック
-        // }
-    }
-
-
     setupCellInteractions(cell, evaluation) {
         cell.addEventListener('mouseenter', (e) => this.showEvaluationTooltip(e, evaluation));
         cell.addEventListener('mouseleave', () => this.hideEvaluationTooltip());

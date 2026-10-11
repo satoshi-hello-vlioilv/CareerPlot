@@ -131,29 +131,23 @@
 }
 
 /* --- 星取表スタイル --- */
-.star-chart-container {
-    width: 100%;
-    overflow: auto; /* Ensure table can scroll if wider than container */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    background-color: var(--base-light);
-    box-shadow: var(--box-shadow-sm);
-    max-height: calc(100vh - 220px); /* Adjust based on header/toolbar height */
-}
-
+/* 縦スクロール・横スクロールは chartContainer が担い、見出し行・項目列・人数列を固定する */
 .star-chart-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed; 
+    width: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
     font-size: var(--font-size-small);
 }
 
 .star-chart-table th,
 .star-chart-table td {
-    border: 1px solid var(--border-color);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    height: 26px;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
     text-align: center;
-    white-space: nowrap; /* Default to nowrap for employee names */
+    white-space: nowrap;
 }
 
 .star-chart-table th {
@@ -162,88 +156,170 @@
     font-weight: 600;
     position: sticky;
     top: 0;
-    z-index: 2; 
+    z-index: 2;
 }
 
 /* 縦軸ヘッダー（資格/作業認定名） */
 .star-chart-table th.star-chart-header-axis {
     position: sticky;
     left: 0;
-    z-index: 3; 
-    width: 280px; /* 縦軸の幅を広げる */
-    min-width: 250px;
+    z-index: 4;
+    width: 260px;
     text-align: left;
     padding-left: var(--spacing-md);
-    background-color: var(--main-primary-dark); 
-    white-space: normal; /* 長い場合に折り返す */
+    background-color: var(--main-primary-dark);
 }
 
 /* 縦軸の項目名セル */
 .star-chart-table td.star-chart-item-name {
     position: sticky;
     left: 0;
+    z-index: 1;
+    width: 260px;
+    max-width: 260px;
+    padding: 0 var(--spacing-sm) 0 var(--spacing-md);
     background-color: var(--base-light-gray);
     font-weight: 500;
     text-align: left;
-    padding-left: var(--spacing-md);
-    white-space: normal; /* 長い場合に折り返す */
-    min-width: 250px;
-    width: 280px; /* 縦軸の幅を広げる */
-    z-index: 1;
-    line-height: 1.3; /* 折り返し時の行間調整 */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.star-chart-table td.star-chart-item-name.cell-hover-active,
-.star-chart-table td.star-chart-item-name:hover {
-    background-color: #FF7F50 !important; /* コーラルオレンジ */
-    color: white !important;
-    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+.star-chart-item-sub {
+    margin-left: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
+    color: var(--text-muted);
 }
-/* 星取表の横軸従業員名ヘッダーのホバー/アクティブ状態（オレンジ系） */
+
+.star-chart-table td.star-chart-item-name.cell-hover-active {
+    background-color: var(--main-primary) !important;
+    color: var(--text-on-primary) !important;
+}
+
+.star-chart-table td.star-chart-item-name.cell-hover-active .star-chart-item-sub {
+    color: inherit;
+}
+
 .star-chart-table th.star-chart-header-employee.cell-hover-active {
-    background-color: #FF6347 !important; /* トマトオレンジ */
-    transition: background-color 0.1s ease-in-out;
+    background-color: var(--main-primary-dark) !important;
+    box-shadow: inset 0 -3px 0 var(--semantic-warning);
 }
 
-
-/* 横軸ヘッダー（従業員名） - 縦書き対応 */
-.star-chart-header-employee {
-    min-width: 40px; /* 縦書きなので幅を狭く */
-    max-width: 60px;
-    height: 150px; /* 名前表示のための十分な高さ */
-    writing-mode: vertical-rl; /* 右から左への縦書き */
+/* 横軸ヘッダー（社員名）: 列幅を固定し、氏名は縦書きで全文表示 */
+.star-chart-table th.star-chart-header-employee {
+    width: 28px;
+    height: auto;
+    padding: 6px 0;
+    writing-mode: vertical-rl;
     text-orientation: mixed;
-    white-space: nowrap; /* 名前が折り返さないように */
-    text-align: center; /* 中央揃え */
-    vertical-align: middle; /* 中央揃え */
-    padding: var(--spacing-sm) 2px; /* パディング調整 */
-    overflow: hidden; /* はみ出し非表示 */
-    text-overflow: ellipsis; /* はみ出し時に省略記号 */
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+/* 分類の見出し行 */
+.star-chart-group td {
+    height: 22px;
+    background-color: #EEF4F6;
+}
+
+.star-chart-table .star-chart-group td.star-chart-item-name {
+    background-color: #EEF4F6;
+    color: var(--main-primary-dark);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+}
+
+/* 人数列（右端に固定） */
+.star-chart-table .star-chart-total {
+    position: sticky;
+    right: 0;
+    width: 84px;
+    padding: 0 var(--spacing-sm);
+    background-color: var(--base-light);
+    border-left: 2px solid var(--border-color);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+    z-index: 1;
+}
+
+.star-chart-table th.star-chart-total {
+    background-color: var(--main-primary-dark);
+    z-index: 3;
+}
+
+.star-chart-bar {
+    display: inline-block;
+    width: 40px;
+    height: 8px;
+    margin-right: 6px;
+    border-radius: 2px;
+    background-color: var(--base-light-gray);
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.star-chart-bar i {
+    display: block;
+    height: 100%;
+    background-color: var(--main-primary);
+}
+
+/* 社員ごとの保有数（最下行に固定） */
+.star-chart-summary td {
+    position: sticky;
+    bottom: 0;
+    background-color: var(--base-background);
+    border-top: 2px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.star-chart-table .star-chart-summary td.star-chart-item-name {
+    z-index: 2;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
 }
 
 /* 星取表のデータセル */
 .star-chart-cell {
-    font-size: var(--font-size-xs); /* シンボルのサイズ調整 */
-    font-weight: bold;
-    padding: 0;
-    line-height: 1; /* シンボルの縦位置調整 */
-    align-items: center; /* 中身を垂直方向の中央に配置します */
-    justify-content: center; /* 中身を水平方向の中央に配置します */
-    min-width: 60px; /* セルの最小幅 */
+    width: 28px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
 }
 
-.star-chart-table tbody tr:nth-child(even) {
-    background-color: rgba(248, 249, 250, 0.5);
-}
-/* 既存の tr:hover スタイルはデータセルのみに適用されるように調整 */
-.star-chart-table tbody tr:hover td:not(.star-chart-item-name):not(.cell-hover-active) { 
-    background-color: rgba(233, 236, 239, 0.7);
-}
-.star-chart-table tbody tr:hover td.star-chart-item-name {
-    background-color: var(--base-medium-gray); /* 縦軸項目名ホバー */
-    color: var(--text-on-primary);
+.star-chart-cell.status-acquired,
+.star-chart-cell.level-expert,
+.star-chart-cell.level-independent {
+    color: var(--main-primary-dark);
 }
 
+.star-chart-cell.level-supervised {
+    color: #3F6A9E;
+}
+
+.star-chart-cell.status-planned,
+.star-chart-cell.level-training {
+    color: #8A5A00;
+}
+
+.star-chart-table tbody tr:nth-child(even) .star-chart-cell {
+    background-color: #FBFCFC;
+}
+/* 行ホバーはデータセルのみ（固定列は不透明色を保つ） */
+.star-chart-table tbody tr:hover .star-chart-cell {
+    background-color: #EEF1F3;
+}
+.star-chart-table .star-chart-cell:hover {
+    outline: 2px solid var(--main-primary);
+    outline-offset: -2px;
+}
 /* 星取表の縦軸項目内の詳細情報用コンテナ */
 .star-chart-item-details {
     display: flex;
@@ -285,18 +361,54 @@
 .star-chart-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    gap: var(--spacing-md);
+    min-height: 100%;
 }
 
+/* タイトル・操作説明・凡例を1行に収め、表の表示領域を確保する */
 .star-chart-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md);
-    background: var(--base-light-gray);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--base-medium-gray);
+    align-items: baseline;
+    gap: var(--spacing-md);
+    padding: 6px var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.star-chart-header h2 {
+    margin: 0;
+    font-size: var(--font-size-normal);
+}
+
+.star-chart-info {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+.star-chart-legend-inline {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-left: auto;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+.star-legend-item b {
+    margin-right: 3px;
+    font-size: 13px;
+}
+
+.star-legend-item.status-acquired b,
+.star-legend-item.level-expert b,
+.star-legend-item.level-independent b {
+    color: var(--main-primary-dark);
+}
+
+.star-legend-item.level-supervised b {
+    color: #3F6A9E;
+}
+
+.star-legend-item.status-planned b,
+.star-legend-item.level-training b {
+    color: #8A5A00;
 }
 
 .star-chart-header h3 {

@@ -20,14 +20,15 @@
     body.printing header,
     body.printing .sidebar,
     body.printing .toolbar,
-    body.printing .tabs-navigation .action-buttons,
+    body.printing .view-options,
+    body.printing .filter-chip-clear,
+    body.printing .filter-summary-clear,
     body.printing .modal-overlay,
     body.printing .notification,
     body.printing .tooltip,
     body.printing .btn-action,
     body.printing .btn-table-action,
     body.printing .empty-cell-add,
-    body.printing .sidebar-collapse-btn,
     body.printing .employee-search-container {
         display: none !important;
     }

@@ -84,7 +84,11 @@ class AppUICore {
     getComputedBgHex(element) {
         if (!element) return '#FFFFFF';
         
+        // DOM 未接続の要素は算出スタイルが得られない（CSS 変数も解決されない）ため、一時的に接続して計算する
+        const detached = !element.isConnected;
+        if (detached) document.body.appendChild(element);
         const bgColor = window.getComputedStyle(element).backgroundColor;
+        if (detached) element.remove();
         
         // rgb(r, g, b)形式を16進数に変換
         if (bgColor.startsWith('rgb')) {
@@ -105,54 +109,10 @@ class AppUICore {
     }
     
     initializeFilterSections() {
-        // フィルターセクションのトグル動作追加
-        document.querySelectorAll('.filter-section h3').forEach(header => {
-            header.addEventListener('click', () => {
-                const section = header.closest('.filter-section');
-                section.classList.toggle('collapsed');
-                // FontAwesomeアイコンの方向も動的に変更
-                const icon = header.querySelector('.fa-chevron-right, .fa-chevron-down');
-                if (icon) {
-                    icon.classList.toggle('fa-chevron-right');
-                    icon.classList.toggle('fa-chevron-down');
-                }
-            });
+        // レールの開閉は AppShell が担当する。空表示の「社員リストを確認」は表示社員パネルを開く
+        document.getElementById('focusEmployeeListBtn')?.addEventListener('click', () => {
+            this.appController.shell?.openPanel('employeeRail');
         });
-        
-        // サイドバーの折りたたみボタン
-        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
-        if (sidebarCollapseBtn) {
-            sidebarCollapseBtn.addEventListener('click', () => {
-                const sidebar = document.getElementById('sidebar');
-                if (sidebar) {
-                    sidebar.classList.toggle('collapsed');
-                    // ボタンのアイコンを反転
-                    const icon = sidebarCollapseBtn.querySelector('i');
-                    if (icon) {
-                        if (sidebar.classList.contains('collapsed')) {
-                            icon.classList.remove('fa-chevron-left');
-                            icon.classList.add('fa-chevron-right');
-                        } else {
-                            icon.classList.remove('fa-chevron-right');
-                            icon.classList.add('fa-chevron-left');
-                        }
-                    }
-                }
-            });
-        }
-        
-        // サイドバーにフォーカスするボタン
-        const focusEmployeeListBtn = document.getElementById('focusEmployeeListBtn');
-        if (focusEmployeeListBtn) {
-            focusEmployeeListBtn.addEventListener('click', () => {
-                const sidebar = document.getElementById('sidebar');
-                const employeeList = document.querySelector('.employee-select-list');
-                if (sidebar && employeeList) {
-                    sidebar.classList.remove('collapsed');
-                    employeeList.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        }
     }
     
     initializeMenu() {
@@ -215,74 +175,63 @@ class AppUICore {
         });
     }
     
+    /** 範囲スライダーの定義（要素IDと値の範囲） */
+    static RANGE_SLIDERS = {
+        age: { container: '.age-range-slider-container', minThumb: 'minThumb', maxThumb: 'maxThumb', minValue: 'minValue', maxValue: 'maxValue', min: 18, max: 65, option: 'ageRange' },
+        tenure: { container: '.tenure-range-slider-container', minThumb: 'minTenureThumb', maxThumb: 'maxTenureThumb', minValue: 'minTenureValue', maxValue: 'maxTenureValue', min: 0, max: 50, option: 'tenureRange' }
+    };
+
+    getRangeSliderElements(type) {
+        const def = AppUICore.RANGE_SLIDERS[type];
+        const el = {
+            minThumb: document.getElementById(def.minThumb),
+            maxThumb: document.getElementById(def.maxThumb),
+            minValue: document.getElementById(def.minValue),
+            maxValue: document.getElementById(def.maxValue),
+            track: document.querySelector(`${def.container} .double-slider-track`),
+            range: document.querySelector(`${def.container} .double-slider-range`)
+        };
+        return Object.values(el).every(Boolean) ? el : null;
+    }
+
+    getRangeSliderBounds(type) {
+        const { min, max } = AppUICore.RANGE_SLIDERS[type];
+        return { min, max };
+    }
+
+    /** スライダーの表示（つまみ位置と数値）を指定値に合わせる。データへの反映は呼び出し側で行う */
+    setRangeSliderValues(type, minVal, maxVal) {
+        const el = this.getRangeSliderElements(type);
+        if (!el) return;
+        const { min, max } = AppUICore.RANGE_SLIDERS[type];
+        el.minValue.textContent = minVal;
+        el.maxValue.textContent = maxVal;
+        this.updateSliderPositions(el.minThumb, el.maxThumb, el.range, minVal, maxVal, min, max);
+    }
+
+    initializeRangeSlider(type) {
+        const el = this.getRangeSliderElements(type);
+        if (!el) return;
+        const { min, max, option } = AppUICore.RANGE_SLIDERS[type];
+        const initial = this.appController.displayOptions?.[option] || {};
+        this.setRangeSliderValues(type, initial.min ?? min, initial.max ?? max);
+
+        const { minThumb, maxThumb, minValue, maxValue, track, range } = el;
+        [[minThumb, true], [maxThumb, false]].forEach(([thumb, isMin]) => {
+            // スライダー操作中のテキスト選択を防止
+            thumb.addEventListener('dragstart', e => e.preventDefault());
+            const onStart = e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, isMin, type);
+            thumb.addEventListener('mousedown', onStart);
+            thumb.addEventListener('touchstart', onStart);
+        });
+    }
+
     initializeAgeRangeSlider() {
-        const minThumb = document.getElementById('minThumb');
-        const maxThumb = document.getElementById('maxThumb');
-        const minValue = document.getElementById('minValue');
-        const maxValue = document.getElementById('maxValue');
-        const track = document.querySelector('.age-range-slider-container .double-slider-track');
-        const range = document.querySelector('.age-range-slider-container .double-slider-range');
-        
-        if (!minThumb || !maxThumb || !minValue || !maxValue || !track || !range) return;
-        
-        const min = 18; // 最小年齢
-        const max = 65; // 最大年齢
-        
-        // コントローラーから初期値を設定（またはデフォルト値）
-        const initialMinVal = this.appController.displayOptions?.ageRange?.min || min;
-        const initialMaxVal = this.appController.displayOptions?.ageRange?.max || max;
-        
-        // 表示値を更新
-        minValue.textContent = initialMinVal;
-        maxValue.textContent = initialMaxVal;
-        
-        // 初期位置を設定
-        this.updateSliderPositions(minThumb, maxThumb, range, initialMinVal, initialMaxVal, min, max);
-        
-        // スライダー操作中のテキスト選択を防止
-        minThumb.addEventListener('dragstart', e => e.preventDefault());
-        maxThumb.addEventListener('dragstart', e => e.preventDefault());
-        
-        // マウスとタッチイベントのリスナー
-        minThumb.addEventListener('mousedown', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, true, 'age'));
-        maxThumb.addEventListener('mousedown', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, false, 'age'));
-        minThumb.addEventListener('touchstart', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, true, 'age'));
-        maxThumb.addEventListener('touchstart', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, false, 'age'));
+        this.initializeRangeSlider('age');
     }
     
     initializeTenureRangeSlider() {
-        const minThumb = document.getElementById('minTenureThumb');
-        const maxThumb = document.getElementById('maxTenureThumb');
-        const minValue = document.getElementById('minTenureValue');
-        const maxValue = document.getElementById('maxTenureValue');
-        const track = document.querySelector('.tenure-range-slider-container .double-slider-track');
-        const range = document.querySelector('.tenure-range-slider-container .double-slider-range');
-        
-        if (!minThumb || !maxThumb || !minValue || !maxValue || !track || !range) return;
-        
-        const min = 0; // 最小勤続年数
-        const max = 50; // 最大勤続年数
-        
-        // コントローラーから初期値を設定（またはデフォルト値）
-        const initialMinVal = this.appController.displayOptions?.tenureRange?.min || min;
-        const initialMaxVal = this.appController.displayOptions?.tenureRange?.max || max;
-        
-        // 表示値を更新
-        minValue.textContent = initialMinVal;
-        maxValue.textContent = initialMaxVal;
-        
-        // 初期位置を設定
-        this.updateSliderPositions(minThumb, maxThumb, range, initialMinVal, initialMaxVal, min, max);
-        
-        // スライダー操作中のテキスト選択を防止
-        minThumb.addEventListener('dragstart', e => e.preventDefault());
-        maxThumb.addEventListener('dragstart', e => e.preventDefault());
-        
-        // マウスとタッチイベントのリスナー
-        minThumb.addEventListener('mousedown', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, true, 'tenure'));
-        maxThumb.addEventListener('mousedown', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, false, 'tenure'));
-        minThumb.addEventListener('touchstart', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, true, 'tenure'));
-        maxThumb.addEventListener('touchstart', e => this.handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, false, 'tenure'));
+        this.initializeRangeSlider('tenure');
     }
     
     handleThumbDrag(e, minThumb, maxThumb, minValue, maxValue, track, range, min, max, isMin, rangeType) {

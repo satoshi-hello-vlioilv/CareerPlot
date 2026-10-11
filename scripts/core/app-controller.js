@@ -124,6 +124,10 @@ class AppController {
         
         this.appUI.toggleAgeRangeSliderVisibility(false);
         this.appUI.toggleTenureRangeSliderVisibility(false);
+
+        // 画面骨格（レール・絞り込みサマリー・ビュー文脈）
+        this.shell = new AppShell(this);
+        this.shell.init();
         this.toggleEmployeeSelectVisibility(this.displayOptions.currentView === 'chart');
         
         this.refreshData();
@@ -529,60 +533,16 @@ class AppController {
     updateFilterVisualState(filterId, selectedValues, totalOptions) {
         const filterSection = document.getElementById(filterId);
         if (!filterSection) return;
-        
+
         const totalCount = Array.isArray(totalOptions) ? totalOptions.length : totalOptions;
         const selectedCount = selectedValues.size;
-        
-        // フィルターのヘッダー要素
-        const headerEl = filterSection.querySelector('h3');
-        if (!headerEl) return;
-        
-        // 現在のフィルター状態アイコンを削除（存在する場合）
-        const existingIndicator = headerEl.querySelector('.filter-active-indicator');
-        if (existingIndicator) {
-            existingIndicator.remove();
-        }
-        
-        // 現在のフィルターカウントを削除（存在する場合）
-        const existingCount = headerEl.querySelector('.filter-count');
-        if (existingCount) {
-            existingCount.remove();
-        }
-        
-        // 修正: 全選択または全選択でない場合にフィルターセクションにクラスを追加
-        // 全選択の場合（selectedCount === totalCount）のみ通常表示
-        if (selectedCount !== totalCount) {
-            filterSection.classList.add('filtered');
-            
-            // フィルター状態属性を設定（CSS用）
-            if (selectedCount === 0) {
-                filterSection.setAttribute('data-filter-state', 'none');
-            } else if (selectedCount < totalCount) {
-                filterSection.setAttribute('data-filter-state', 'partial');
-            }
-            
-            // フィルターアクティブアイコンを追加
-            const indicator = document.createElement('i');
-            indicator.className = 'fas fa-filter filter-active-indicator';
-            headerEl.appendChild(indicator);
-            
-            // 選択数バッジを追加
-            const countBadge = document.createElement('span');
-            countBadge.className = 'filter-count';
-            
-            // 表示テキストの調整
-            if (selectedCount === 0) {
-                countBadge.textContent = '0';
-                countBadge.title = `全選択解除 (0/${totalCount})`;
-            } else {
-                countBadge.textContent = selectedCount;
-                countBadge.title = `${selectedCount}/${totalCount} 選択中`;
-            }
-            
-            headerEl.appendChild(countBadge);
+        const isFiltered = selectedCount !== totalCount;
+
+        // レール項目の状態表示（partial: 一部選択 / none: 未選択）は CSS が data-filter-state から描画する
+        filterSection.classList.toggle('filtered', isFiltered);
+        if (isFiltered) {
+            filterSection.setAttribute('data-filter-state', selectedCount === 0 ? 'none' : 'partial');
         } else {
-            // 全選択の場合はフィルター表示を解除
-            filterSection.classList.remove('filtered');
             filterSection.removeAttribute('data-filter-state');
         }
     }
@@ -612,27 +572,6 @@ class AppController {
         const contractTypes = this.appData.getContractTypes();
         this.filters.contractTypes = new Set(contractTypes.map(ct => ct.id));
         this.updateContractTypeFilter(); // この中で updateFilterVisualState も呼ばれる
-    }
-
-    /**
-     * リストボックスIDからフィルターセクションIDを取得
-     * @param {string} listBoxId - リストボックスのID
-     * @returns {string|null} - フィルターセクションのID
-     */
-    getFilterSectionIdFromListBoxId(listBoxId) {
-        const mapping = {
-            'departmentListBox': 'departmentFilter',
-            'ageListBox': 'ageFilter',
-            'tenureListBox': 'tenureFilter',
-            'positionListBox': 'positionFilter',
-            'teamListBox': 'teamFilter',
-            'gradeListBox': 'gradeFilter',
-            'evaluationTypeListBox': 'evaluationFilter',
-            'yearListBox': 'yearFilter',
-            'recruitTypeListBox': 'recruitTypeFilter',
-            'contractTypeListBox': 'contractTypeFilter' // 追加
-        };
-        return mapping[listBoxId] || null;
     }
 
     /**
@@ -1006,64 +945,6 @@ class AppController {
                 this.refreshChart();
             });
         }
-
-        // 全選択ボタンのイベントリスナー
-        document.querySelectorAll('.btn-select-all').forEach(btn => {
-            const clone = btn.cloneNode(true);
-            btn.parentNode.replaceChild(clone, btn);
-            clone.addEventListener('click', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                const listBox = document.getElementById(targetId);
-                if (listBox) {
-                    Array.from(listBox.options).forEach(option => {
-                        option.selected = true;
-                    });
-                    // リストボックスの change イベントを手動で発火
-                    const event = new Event('change');
-                    listBox.dispatchEvent(event);
-                    
-                    // 対応するフィルターセクションIDを取得
-                    const filterSectionId = this.getFilterSectionIdFromListBoxId(targetId);
-                    if (filterSectionId) {
-                        // フィルター名と対応するフィルターセットを取得
-                        const filterInfo = this.getFilterInfoFromSectionId(filterSectionId);
-                        if (filterInfo) {
-                            // フィルターの視覚的状態を更新
-                            this.updateFilterVisualState(filterSectionId, filterInfo.filterSet, filterInfo.totalCount);
-                        }
-                    }
-                }
-            });
-        });
-
-        // 全解除ボタンのイベントリスナー
-        document.querySelectorAll('.btn-deselect-all').forEach(btn => {
-            const clone = btn.cloneNode(true);
-            btn.parentNode.replaceChild(clone, btn);
-            clone.addEventListener('click', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                const listBox = document.getElementById(targetId);
-                if (listBox) {
-                    Array.from(listBox.options).forEach(option => {
-                        option.selected = false;
-                    });
-                    // リストボックスの change イベントを手動で発火
-                    const event = new Event('change');
-                    listBox.dispatchEvent(event);
-                    
-                    // 対応するフィルターセクションIDを取得
-                    const filterSectionId = this.getFilterSectionIdFromListBoxId(targetId);
-                    if (filterSectionId) {
-                        // フィルター名と対応するフィルターセットを取得
-                        const filterInfo = this.getFilterInfoFromSectionId(filterSectionId);
-                        if (filterInfo) {
-                            // フィルターの視覚的状態を更新
-                            this.updateFilterVisualState(filterSectionId, filterInfo.filterSet, filterInfo.totalCount);
-                        }
-                    }
-                }
-            });
-        });
 
         // 社員選択リストの「すべて選択」ボタン
         const selectAllEmployeesBtn = this.replaceElementWithClone('selectAllEmployeesBtn');
@@ -1640,6 +1521,7 @@ class AppController {
     }
 
     refreshChart() {
+        this.shell?.refresh();
         const filteredEmployees = this.getFilteredEmployees();
         // Filter selected IDs to only include those that are still visible after filtering
         const employeesToDisplayIds = this.selectedEmployeeIds.filter(id =>
@@ -1744,6 +1626,7 @@ class AppController {
     changeView(view) {
         this.displayOptions.currentView = view;
         this.appUI.toggleToolbarOptionsForView(view);
+        this.shell?.applyViewContext(view);
         
         // 昇給比較ビューで無効な軸が選択されている場合は強制的に年齢軸にする
         if (view === 'salary-comparison') {
@@ -1788,10 +1671,7 @@ class AppController {
 
     // 社員選択リストの表示/非表示を切り替えるメソッドを追加
     toggleEmployeeSelectVisibility(visible) {
-        const employeeSelectList = document.querySelector('.employee-select-list');
-        if (employeeSelectList) {
-            employeeSelectList.style.display = visible ? 'block' : 'none';
-        }
+        this.shell?.setEmployeeRailVisible(visible);
     }
 
     updateAgeRange(ageRange) {

@@ -16,14 +16,14 @@
     --base-medium-gray-rgb: 173, 181, 189; /* RGB値追加 */
     --base-dark-gray-rgb: 108, 117, 125; /* RGB値追加 */
     --text-color: #343A40;     /* Dark Gray/Near Black for text */
-    --text-muted: #6C757D;     /* Muted text (same as dark gray) */
+    --text-muted: #5F6B76;     /* Muted text: AA contrast on white (5.45:1) and on background (5.17:1) */
     --border-color: #DEE2E6;   /* Default border color */
 
     /* Main Color: Teal Blue */
-    --main-primary: #3A8A9E; /* Teal Blue - AA contrast with white OK (4.64:1) */
-    --main-primary-rgb: 58, 138, 158; /* RGB for rgba */
+    --main-primary: #2E7487; /* Teal Blue - AA contrast with white (5.30:1) */
+    --main-primary-rgb: 46, 116, 135; /* RGB for rgba */
     --main-primary-light: #A8D8E6; /* Lighter Teal Blue (AA contrast with black: 2.75:1 - Borderline, use dark text) */
-    --main-primary-dark: #2C6A7B; /* Darker Teal Blue */
+    --main-primary-dark: #235B6A; /* Darker Teal Blue */
     --main-primary-gradient: linear-gradient(135deg, var(--main-primary-light) 0%, var(--main-primary) 100%);
     --text-on-primary: #FFFFFF; /* White text on primary */
 
@@ -156,19 +156,19 @@ body {
 header {
     background: var(--main-primary);
     color: var(--text-on-primary);
-    padding: var(--spacing-xs) var(--spacing-lg);
+    padding: 0 var(--spacing-md);
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: var(--box-shadow-md);
     z-index: 100;
-    height: 50px;
+    height: 44px;
     flex-shrink: 0;
 }
 
 
 header h1 {
-    font-size: var(--font-size-large);
+    font-size: var(--font-size-medium);
     margin: 0;
     font-weight: 600;
     display: flex;
@@ -196,67 +196,7 @@ header h1 i {
 }
 
 
-/* サイドバー */
-.sidebar {
-    width: 260px;
-    background-color: var(--base-light);
-    box-shadow: var(--box-shadow-sm);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: width var(--transition-normal), padding var(--transition-normal);
-    z-index: 50;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border-color);
-}
-
-
-.sidebar-collapse-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: var(--spacing-xs);
-    background-color: var(--main-primary-light);
-    color: var(--text-color); /* Use dark text on light primary */
-    cursor: pointer;
-    height: 28px;
-    transition: background-color var(--transition-fast);
-    border-bottom: 1px solid var(--border-color);
-}
-
-
-.sidebar-collapse-btn:hover {
-    background-color: var(--main-primary);
-    color: var(--text-on-primary); /* Change text to white on hover */
-}
-
-.sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-sm) var(--spacing-md);
-    transition: opacity var(--transition-normal), visibility var(--transition-normal);
-    opacity: 1;
-    visibility: visible;
-}
-
-
-.sidebar.collapsed {
-    width: 50px;
-    padding: 0;
-}
-
-
-.sidebar.collapsed .sidebar-content {
-    opacity: 0;
-    visibility: hidden;
-    padding: 0;
-    overflow: hidden;
-}
-
-.sidebar.collapsed .sidebar-collapse-btn i {
-
-}
-
+/* サイドバー（左レール）とタブは shell.css */
 
 /* メインコンテンツ */
 .content {
@@ -266,57 +206,6 @@ header h1 i {
     display: flex;
     flex-direction: column;
 }
-
-/* タブナビゲーション */
-.tabs-navigation {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    margin-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-color);
-    flex-wrap: wrap;
-    padding-bottom: var(--spacing-xs);
-}
-
-.tab-btn {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: var(--font-size-small);
-    white-space: nowrap;
-}
-
-.tab-btn i {
-    font-size: 1em;
-    margin-right: 2px;
-}
-
-.tab-btn:hover {
-    color: var(--main-primary-dark);
-    background-color: var(--base-light-gray);
-}
-
-.tab-btn.active {
-    color: var(--main-primary);
-    border-bottom-color: var(--main-primary);
-}
-
-.action-buttons {
-    margin-left: auto;
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
-    padding-left: var(--spacing-sm);
-}
-
 
 /* チャート */
 .chart-container {

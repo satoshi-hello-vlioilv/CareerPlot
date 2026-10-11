@@ -12,102 +12,79 @@
     <link rel="stylesheet" href="styles/evaluation.css">
     <link rel="stylesheet" href="styles/certification.css">
     <link rel="stylesheet" href="styles/setting-all.css">
+    <link rel="stylesheet" href="styles/shell.css">
     <link rel="stylesheet" href="styles/print.css">
 </head>
 <body>
-    <!-- ヘッダー -->
+    <!-- ヘッダー: アプリ名と、どのビューからも使う操作 -->
     <header>
         <h1><i class="fas fa-chart-line"></i> 人事評定視覚化アプリ</h1>
         <div class="header-controls">
-            <button id="addEvaluationBtn" class="btn-action" title="評価追加">
-                <i class="fas fa-star-half-alt"></i>
-            </button>
-            <button id="manageEmployeesBtn" class="btn-action" title="社員追加">
-                <i class="fas fa-user-plus"></i>
-            </button>
-            <button id="settingsBtn" class="btn-action" title="設定">
-                <i class="fas fa-cog"></i>
-            </button>
-            <!-- 画像出力ボタンを追加 -->
-            <button id="exportImageBtn" class="btn-action" title="画像出力">
-                <i class="fas fa-camera"></i>
-            </button>
-            <button id="printBtn" class="btn-action" title="印刷">
-                <i class="fas fa-print"></i>
-            </button>
+            <button id="addEvaluationBtn" class="btn-action" title="評価を追加"><i class="fas fa-star-half-alt"></i><span>評価を追加</span></button>
+            <button id="manageEmployeesBtn" class="btn-action" title="社員を追加"><i class="fas fa-user-plus"></i><span>社員を追加</span></button>
+            <button id="settingsBtn" class="btn-action" title="統合管理（マスタ・社員・データ入出力）"><i class="fas fa-cog"></i><span>管理</span></button>
+            <button id="exportImageBtn" class="btn-action" title="表示中の画面を画像で保存"><i class="fas fa-camera"></i><span>画像</span></button>
+            <button id="printBtn" class="btn-action" title="印刷"><i class="fas fa-print"></i><span>印刷</span></button>
         </div>
     </header>
 
-    <!-- メインコンテンツエリア -->
     <div class="main-container">
-        <!-- サイドバー -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-collapse-btn" id="sidebarCollapseBtn">
-                <i class="fas fa-chevron-left"></i>
-            </div>
-            <div class="sidebar-content">
-            <!-- 評価年度フィルター -->
-            <div class="filter-section collapsed" id="yearFilter">
-                <h3><i class="fas fa-calendar-alt"></i> 評価年度フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="yearListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="yearListBox">すべて解除</button>
+        <!-- 左レール: 対象を絞る条件。項目をクリックするとパネルが開く -->
+        <nav class="sidebar filter-rail" id="sidebar" aria-label="絞り込み">
+            <!-- 表示社員（評価チャート・昇給分析で使用） -->
+            <div class="filter-section rail-employees" id="employeeRail" data-title="表示社員">
+                <h3 class="rail-item" title="チャートに表示する社員を選ぶ"><i class="fas fa-user-check"></i><span>表示社員</span><b class="rail-badge" id="employeeRailCount">0</b></h3>
+                <div class="filter-content rail-panel">
+                    <div class="employee-select-list">
+                        <div class="employee-select-list-header">
+                            <h3>表示社員</h3>
+                            <span class="selection-count" id="selectionCountBox"><span id="selectedEmployeeCount2">0</span>/<span id="totalEmployeeCount2">0</span>名</span>
+                        </div>
+                        <span class="selection-info">クリックで選択/解除（評価チャート・昇給分析に反映）</span>
+                        <div class="filter-actions">
+                            <button type="button" class="btn-filter btn-select-all" id="selectAllEmployeesBtn">すべて選択</button>
+                            <button type="button" class="btn-filter btn-deselect-all" id="deselectAllEmployeesBtn">すべて解除</button>
+                        </div>
+                        <div class="employee-search-container">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="employeeSelectSearch" class="employee-search" placeholder="表示社員検索...">
+                        </div>
+                        <div id="employeeSelectListContainer" class="employee-select-list-container">
+                            <!-- チャート表示用社員リストアイテムがJSで動的に追加される -->
+                        </div>
                     </div>
-                    <select id="yearListBox" name="year" multiple class="filter-listbox">
-                        <!-- 評価年度オプションがJSで動的に追加される -->
-                    </select>
                 </div>
             </div>
+            <div class="rail-separator"></div>
 
-            <!-- 部署フィルター -->
-            <div class="filter-section collapsed" id="departmentFilter">
-                <h3><i class="fas fa-building"></i> 部署フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="departmentListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="departmentListBox">すべて解除</button>
-                    </div>
-                    <select id="departmentListBox" name="department" multiple class="filter-listbox">
-                        <!-- 部署オプションがJSで動的に追加される -->
-                    </select>
+            <div class="filter-section" id="yearFilter" data-title="評価年度">
+                <h3 class="rail-item" title="評価年度で絞り込む"><i class="fas fa-calendar-alt"></i><span>年度</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="yearListBox" multiple class="filter-listbox" hidden></select>
                 </div>
             </div>
-            <!-- 所属班フィルター -->
-            <div class="filter-section collapsed" id="teamFilter">
-                <h3><i class="fas fa-users"></i> 所属班フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="teamListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="teamListBox">すべて解除</button>
-                    </div>
-                    <select id="teamListBox" name="team" multiple class="filter-listbox">
-                        <!-- 所属班オプションがJSで動的に追加される -->
-                    </select>
+            <div class="filter-section" id="departmentFilter" data-title="部署">
+                <h3 class="rail-item" title="部署で絞り込む"><i class="fas fa-building"></i><span>部署</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="departmentListBox" multiple class="filter-listbox" hidden></select>
                 </div>
             </div>
-            <!-- 役職フィルター -->
-            <div class="filter-section collapsed" id="positionFilter">
-                <h3><i class="fas fa-user-tie"></i> 役職フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="positionListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="positionListBox">すべて解除</button>
-                    </div>
-                    <select id="positionListBox" name="position" multiple class="filter-listbox">
-                        <!-- 役職オプションがJSで動的に追加される -->
-                    </select>
+            <div class="filter-section" id="teamFilter" data-title="所属班">
+                <h3 class="rail-item" title="所属班で絞り込む"><i class="fas fa-users"></i><span>班</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="teamListBox" multiple class="filter-listbox" hidden></select>
                 </div>
             </div>
-            <!-- 年齢フィルター -->
-            <div class="filter-section collapsed" id="ageFilter">
-                <h3><i class="fas fa-user-clock"></i> 年齢フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="ageListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="ageListBox">すべて解除</button>
-                    </div>
-                    <select id="ageListBox" name="age" multiple class="filter-listbox">
+            <div class="filter-section" id="positionFilter" data-title="役職">
+                <h3 class="rail-item" title="役職で絞り込む"><i class="fas fa-user-tie"></i><span>役職</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="positionListBox" multiple class="filter-listbox" hidden></select>
+                </div>
+            </div>
+            <div class="filter-section" id="ageFilter" data-title="年齢">
+                <h3 class="rail-item" title="年齢で絞り込む"><i class="fas fa-user-clock"></i><span>年齢</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="ageListBox" multiple class="filter-listbox" hidden>
                         <option value="10s" selected>10代</option>
                         <option value="20s" selected>20代</option>
                         <option value="30s" selected>30代</option>
@@ -115,18 +92,13 @@
                         <option value="50s" selected>50代</option>
                         <option value="60s" selected>60代</option>
                     </select>
-                    <p class="text-sm text-muted mt-xs">※ 年齢範囲スライダーも適用されます</p>
+                    <p class="filter-note">年齢軸の範囲スライダーも同時に適用されます</p>
                 </div>
             </div>
-            <!-- 勤続年数フィルター -->
-            <div class="filter-section collapsed" id="tenureFilter">
-                <h3><i class="fas fa-business-time"></i> 勤続年数フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="tenureListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="tenureListBox">すべて解除</button>
-                    </div>
-                    <select id="tenureListBox" name="tenure" multiple class="filter-listbox">
+            <div class="filter-section" id="tenureFilter" data-title="勤続年数">
+                <h3 class="rail-item" title="勤続年数で絞り込む"><i class="fas fa-business-time"></i><span>勤続</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="tenureListBox" multiple class="filter-listbox" hidden>
                         <option value="0-5" selected>0-5年</option>
                         <option value="6-10" selected>6-10年</option>
                         <option value="11-15" selected>11-15年</option>
@@ -134,61 +106,38 @@
                         <option value="21-30" selected>21-30年</option>
                         <option value="31-" selected>31年以上</option>
                     </select>
-                    <p class="text-sm text-muted mt-xs">※ 勤続年数範囲スライダーも適用されます</p>
+                    <p class="filter-note">勤続年数軸の範囲スライダーも同時に適用されます</p>
                 </div>
             </div>
-            <!-- グレードフィルター -->
-            <div class="filter-section collapsed" id="gradeFilter">
-                <h3><i class="fas fa-award"></i> グレードフィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="gradeListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="gradeListBox">すべて解除</button>
-                    </div>
-                    <select id="gradeListBox" name="grade" multiple class="filter-listbox">
-                        <!-- グレードオプションがJSで動的に追加される -->
-                    </select>
+            <div class="filter-section" id="gradeFilter" data-title="グレード">
+                <h3 class="rail-item" title="グレードで絞り込む"><i class="fas fa-award"></i><span>グレード</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="gradeListBox" multiple class="filter-listbox" hidden></select>
                 </div>
             </div>
-
-            <!-- 評価タイプフィルター -->
-            <div class="filter-section collapsed" id="evaluationFilter">
-                <h3><i class="fas fa-star"></i> 評価タイプフィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="evaluationTypeListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="evaluationTypeListBox">すべて解除</button>
-                    </div>
-                    <select id="evaluationTypeListBox" name="evaluationType" multiple class="filter-listbox">
+            <div class="filter-section" id="evaluationFilter" data-title="評価タイプ">
+                <h3 class="rail-item" title="評価タイプで絞り込む"><i class="fas fa-star"></i><span>評価</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="evaluationTypeListBox" multiple class="filter-listbox" hidden>
                         <option value="A" selected>A評価</option>
                         <option value="B" selected>B評価</option>
                         <option value="C" selected>C評価</option>
                     </select>
                 </div>
             </div>
-            <!-- 新卒/中途フィルター -->
-            <div class="filter-section collapsed" id="recruitTypeFilter">
-                <h3><i class="fas fa-graduation-cap"></i> 新卒/中途フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="recruitTypeListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="recruitTypeListBox">すべて解除</button>
-                    </div>
-                    <select id="recruitTypeListBox" name="recruitType" multiple class="filter-listbox">
+            <div class="filter-section" id="recruitTypeFilter" data-title="新卒/中途">
+                <h3 class="rail-item" title="新卒/中途で絞り込む"><i class="fas fa-graduation-cap"></i><span>採用</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="recruitTypeListBox" multiple class="filter-listbox" hidden>
                         <option value="new-graduate" selected>新卒採用</option>
                         <option value="mid-career" selected>中途採用</option>
                     </select>
                 </div>
             </div>
-            <!-- 契約形態フィルター -->
-            <div class="filter-section collapsed" id="contractTypeFilter">
-                <h3><i class="fas fa-user-tag"></i> 契約形態フィルター <i class="fas fa-chevron-right"></i></h3>
-                <div class="filter-content">
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" data-target="contractTypeListBox">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" data-target="contractTypeListBox">すべて解除</button>
-                    </div>
-                    <select id="contractTypeListBox" name="contractType" multiple class="filter-listbox">
+            <div class="filter-section" id="contractTypeFilter" data-title="契約形態">
+                <h3 class="rail-item" title="契約形態で絞り込む"><i class="fas fa-user-tag"></i><span>契約</span></h3>
+                <div class="filter-content rail-panel">
+                    <select id="contractTypeListBox" multiple class="filter-listbox" hidden>
                         <option value="full-time" selected>正社員</option>
                         <option value="probation" selected>見習社員</option>
                         <option value="contract" selected>契約社員</option>
@@ -198,184 +147,149 @@
                     </select>
                 </div>
             </div>
-
-                <!-- チャート表示用社員リスト -->
-                <div class="employee-select-list">
-                    <div class="employee-select-list-header">
-                    <h3><i class="fas fa-users"></i> 表示社員選択</h3>
-                    <span class="selection-count" id="selectionCountBox"><span id="selectedEmployeeCount2">0</span>/<span id="totalEmployeeCount2">0</span>名</span>
-                    </div>
-                    <span class="selection-info">(クリックで選択/解除)</span>
-                    <!-- 社員選択状態を表示するブロックを非表示に -->
-                    <div class="filter-actions">
-                        <button type="button" class="btn-filter btn-select-all" id="selectAllEmployeesBtn">すべて選択</button>
-                        <button type="button" class="btn-filter btn-deselect-all" id="deselectAllEmployeesBtn">すべて解除</button>
-                    </div>
-                    <div class="employee-search-container">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="employeeSelectSearch" class="employee-search" placeholder="表示社員検索...">
-                    </div>
-                    <div id="employeeSelectListContainer" class="employee-select-list-container">
-                        <!-- チャート表示用社員リストアイテムがJSで動的に追加される -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
+        </nav>
         <!-- メインコンテンツ -->
-        <div class="content">
-            <!-- タブナビゲーション -->
-            <div class="tabs-navigation">
-                <button class="tab-btn" data-view="department"><i class="fas fa-building"></i> 部署別配置</button>
-                <button class="tab-btn" data-view="team"><i class="fas fa-users"></i> 班別配置</button>
-                <button class="tab-btn active" data-view="chart"><i class="fas fa-chart-line"></i> 評価チャート</button>
-                <button class="tab-btn" data-view="salary-comparison"><i class="fas fa-search-dollar"></i> 昇給分析</button>
-                <button class="tab-btn" data-view="star-chart"><i class="fas fa-th-list"></i> 星取表</button>
-                <button class="tab-btn" data-view="matrix"><i class="fas fa-th"></i> マトリクス分布</button>
-                <button class="tab-btn" data-view="career-path"><i class="fas fa-route"></i> キャリアパス分析</button>
-
-                <div class="action-buttons">
-                    <!-- 更新ボタン削除 -->
-                    <!-- 印刷ボタン削除 -->
+        <main class="content">
+            <!-- ビュー切替と、そのビューの見せ方の設定（data-ctx: ビューに応じて表示） -->
+            <div class="viewbar">
+                <div class="tabs-navigation" role="tablist">
+                    <button class="tab-btn" data-view="department"><i class="fas fa-building"></i> 部署別配置</button>
+                    <button class="tab-btn" data-view="team"><i class="fas fa-users"></i> 班別配置</button>
+                    <button class="tab-btn active" data-view="chart"><i class="fas fa-chart-line"></i> 評価チャート</button>
+                    <button class="tab-btn" data-view="salary-comparison"><i class="fas fa-search-dollar"></i> 昇給分析</button>
+                    <button class="tab-btn" data-view="star-chart"><i class="fas fa-th-list"></i> 星取表</button>
+                    <button class="tab-btn" data-view="matrix"><i class="fas fa-th"></i> マトリクス分布</button>
+                    <button class="tab-btn" data-view="career-path"><i class="fas fa-route"></i> キャリアパス分析</button>
+                </div>
+                <div class="view-options">
+                    <div class="toolbar-section" data-ctx="axis">
+                        <label for="chartTypeSelect">表示形式</label>
+                        <select id="chartTypeSelect" class="select">
+                            <option value="grade">グレード軸</option>
+                            <option value="age">年齢軸</option>
+                            <option value="tenure">勤続年数軸</option>
+                            <option value="year">年度軸</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-section age-range-slider-container">
+                        <label><i class="fas fa-sliders-h"></i> 年齢範囲</label>
+                        <div class="compact-double-slider">
+                            <div class="double-slider-track"></div>
+                            <div class="double-slider-range"></div>
+                            <div class="double-slider-thumb" id="minThumb"></div>
+                            <div class="double-slider-thumb" id="maxThumb"></div>
+                        </div>
+                        <div class="double-slider-values">
+                            <span id="minValue">18</span>-<span id="maxValue">65</span>
+                        </div>
+                    </div>
+                    <div class="toolbar-section tenure-range-slider-container">
+                        <label><i class="fas fa-sliders-h"></i> 勤続年数範囲</label>
+                        <div class="compact-double-slider">
+                            <div class="double-slider-track"></div>
+                            <div class="double-slider-range"></div>
+                            <div class="double-slider-thumb" id="minTenureThumb"></div>
+                            <div class="double-slider-thumb" id="maxTenureThumb"></div>
+                        </div>
+                        <div class="double-slider-values">
+                            <span id="minTenureValue">0</span>-<span id="maxTenureValue">50</span>
+                        </div>
+                    </div>
+                    <div class="toolbar-section" data-ctx="sort">
+                        <label for="sortOrderSelect">表示順序</label>
+                        <select id="sortOrderSelect" class="select">
+                            <option value="desc">降順</option>
+                            <option value="asc">昇順</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-section star-chart-options" data-ctx="star" style="display: none;">
+                        <label for="starChartTypeSelect">表示対象</label>
+                        <select id="starChartTypeSelect" class="select">
+                            <option value="qualification">資格</option>
+                            <option value="certification">作業認定</option>
+                        </select>
+                        <div class="checkbox-item compact">
+                            <input type="checkbox" id="showStarChartCategory" checked>
+                            <label for="showStarChartCategory" title="分類ごとに行をまとめて表示">分類</label>
+                        </div>
+                        <div class="checkbox-item compact">
+                            <input type="checkbox" id="showStarChartClassification" checked>
+                            <label for="showStarChartClassification" title="区分を項目名に添えて表示（作業認定のみ）">区分</label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ツールバー -->
-            <div class="toolbar">
-                <!-- 表示形式 (共通) -->
-                <div class="toolbar-section">
-                    <label for="chartTypeSelect">表示形式:</label>
-                    <select id="chartTypeSelect" class="select">
-                        <option value="grade">グレード軸</option>
-                        <option value="age">年齢軸</option>
-                        <option value="tenure">勤続年数軸</option>
-                        <option value="year">年度軸</option>
-                    </select>
-                </div>
+            <!-- 適用中の絞り込み条件（JSで描画） -->
+            <div class="filter-summary" id="filterSummary" aria-live="polite"></div>
 
-                <div class="toolbar-divider"></div>
-
-                <!-- 表示順序 (共通) -->
-                <div class="toolbar-section">
-                    <label for="sortOrderSelect">表示順序:</label>
-                    <select id="sortOrderSelect" class="select">
-                        <option value="desc">降順</option>
-                        <option value="asc">昇順</option>
-                    </select>
-                </div>
-
-                <div class="toolbar-divider"></div>
-
-                <!-- 年齢範囲スライダー (年齢軸の時のみ有効) -->
-                <div class="toolbar-section age-range-slider-container">
-                    <label><i class="fas fa-sliders-h"></i> 年齢範囲:</label>
-                    <div class="compact-double-slider">
-                        <div class="double-slider-track"></div>
-                        <div class="double-slider-range"></div>
-                        <div class="double-slider-thumb" id="minThumb"></div>
-                        <div class="double-slider-thumb" id="maxThumb"></div>
-                    </div>
-                    <div class="double-slider-values">
-                        <span id="minValue">18</span>-<span id="maxValue">65</span>
-                    </div>
-                </div>
-                
-                <!-- 勤続年数範囲スライダー (勤続年数軸の時のみ有効) -->
-                <div class="toolbar-section tenure-range-slider-container">
-                    <label><i class="fas fa-sliders-h"></i> 勤続年数範囲:</label>
-                    <div class="compact-double-slider">
-                        <div class="double-slider-track"></div>
-                        <div class="double-slider-range"></div>
-                        <div class="double-slider-thumb" id="minTenureThumb"></div>
-                        <div class="double-slider-thumb" id="maxTenureThumb"></div>
-                    </div>
-                    <div class="double-slider-values">
-                        <span id="minTenureValue">0</span>-<span id="maxTenureValue">50</span>
-                    </div>
-                </div>
-
-                <div class="toolbar-divider"></div>
-                <!-- 星取表用ツールバーセクション -->
-                <div class="toolbar-section star-chart-options" style="display: none;">
-                    <label for="starChartTypeSelect">表示対象:</label>
-                    <select id="starChartTypeSelect" class="select">
-                        <option value="qualification">資格</option>
-                        <option value="certification">作業認定</option>
-                    </select>
-                    <!-- 追加: 分類・区分表示チェックボックス -->
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showStarChartCategory" checked>
-                        <label for="showStarChartCategory" title="星取表で分類を表示">分類</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showStarChartClassification" checked>
-                        <label for="showStarChartClassification" title="星取表で区分を表示 (作業認定のみ)">区分</label>
-                    </div>
-                </div>
-                <div class="toolbar-divider star-chart-options-divider" style="display: none;"></div>
-
-                <!-- 表示項目チェックボックス (共通) -->
-                <div class="toolbar-section">
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showPhoto" checked>
-                        <label for="showPhoto" title="カード内に顔写真を表示">写真</label>
-                    </div>
+            <!-- カードに表示する項目（見本はJSで付与） -->
+            <div class="toolbar display-options" data-ctx="cards">
+                <div class="option-group">
+                    <span class="option-group-label">評価</span>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showGrade" checked>
-                        <label for="showGrade" title="チャート/配置でグレードを表示">グレード</label>
+                        <label for="showGrade" title="グレードを表示">グレード</label>
                     </div>
-                    <div class="checkbox-item compact">
+                    <div class="checkbox-item compact option-sub">
                         <input type="checkbox" id="showGradeChange" checked>
-                        <label for="showGradeChange" title="グレード変化情報を表示">グレード変化</label>
+                        <label for="showGradeChange" title="前年からのグレード変化（↑↓・維持年数）を表示">変化</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showYearlyEval" checked>
-                        <label for="showYearlyEval" title="チャート/配置で年度評価と変化を表示">年度評価</label>
+                        <label for="showYearlyEval" title="年度評価を表示">年度評価</label>
                     </div>
-                    <div class="checkbox-item compact">
+                    <div class="checkbox-item compact option-sub">
                         <input type="checkbox" id="showYearlyEvalChange" checked>
-                        <label for="showYearlyEvalChange" title="年度評価変化情報を表示">年評変化</label>
+                        <label for="showYearlyEvalChange" title="前年からの年度評価の変化（↑↓・維持年数）を表示">変化</label>
                     </div>
+                </div>
+                <div class="option-group">
+                    <span class="option-group-label">属性</span>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showPosition">
-                        <label for="showPosition" title="チャート/配置で役職を表示">役職</label>
+                        <label for="showPosition" title="役職を表示">役職</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showDepartmentBadge" checked>
-                        <label for="showDepartmentBadge" title="チャート/配置で部署バッジを表示">部署</label>
+                        <label for="showDepartmentBadge" title="部署を表示">部署</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showTeam">
-                        <label for="showTeam" title="チャート/配置で所属班を表示">所属班</label>
+                        <label for="showTeam" title="所属班を表示">班</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showAge">
-                        <label for="showAge" title="チャート/配置で年齢を表示">年齢</label>
+                        <label for="showAge" title="年齢を表示">年齢</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showTenure">
-                        <label for="showTenure" title="チャート/配置で勤続年数を表示">勤続年数</label>
+                        <label for="showTenure" title="勤続年数を表示">勤続</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showRecruitType">
-                        <label for="showRecruitType" title="新卒・中途の区分を表示">新卒/中途</label>
+                        <label for="showRecruitType" title="新卒採用・中途採用の区分を表示">採用</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showContractType" checked>
-                        <label for="showContractType" title="契約形態を表示">契約形態</label>
+                        <label for="showContractType" title="契約形態を表示">契約</label>
+                    </div>
+                </div>
+                <div class="option-group">
+                    <span class="option-group-label">カード</span>
+                    <div class="checkbox-item compact">
+                        <input type="checkbox" id="showPhoto" checked>
+                        <label for="showPhoto" title="顔写真（未登録は頭文字）を表示">写真</label>
                     </div>
                     <div class="checkbox-item compact">
                         <input type="checkbox" id="showFlagIcon" checked>
-                        <label for="showFlagIcon" title="フラグアイコンを表示">フラグ</label>
+                        <label for="showFlagIcon" title="評価に付けたフラグを表示">フラグ</label>
                     </div>
                     <div class="checkbox-item compact salary-comparison-options" style="display: none;">
                         <input type="checkbox" id="showFullName">
-                        <label for="showFullName" title="昇給分析でフルネームを表示">フルネーム</label>
+                        <label for="showFullName" title="昇給分析で氏名をフルネームで表示">フルネーム</label>
                     </div>
                 </div>
-
-                <div class="toolbar-divider"></div>
             </div>
 
             <!-- チャート表示エリア -->
@@ -390,7 +304,7 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
 
@@ -1677,6 +1591,7 @@
     <script src="scripts/ui/ui-visualization-adapter.js"></script>
     <script src="scripts/ui/ui-forms.js"></script>
     <script src="scripts/ui/ui-manager.js"></script>
+    <script src="scripts/ui/ui-shell.js"></script>
 
     <!-- コアコンポーネント -->
     <script src="scripts/core/app-settings-core.js"></script>

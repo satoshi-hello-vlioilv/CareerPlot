@@ -1079,7 +1079,9 @@ class UIForms {
         // 選択数と総数のカウンター更新
         const selectedCountElem = document.getElementById('selectedEmployeeCount2');
         const totalCountElem = document.getElementById('totalEmployeeCount2');
-        if (selectedCountElem) selectedCountElem.textContent = selectedEmployeeIds.length;
+        // 選択数は「絞り込み後に表示されている社員」のうち選択中の人数（総数を超えないようにする）
+        const visibleIds = new Set(filteredEmployees.map(emp => emp.id));
+        if (selectedCountElem) selectedCountElem.textContent = selectedEmployeeIds.filter(id => visibleIds.has(id)).length;
         if (totalCountElem) totalCountElem.textContent = filteredEmployees.length;
 
         // フィルター条件にマッチする社員がない場合のメッセージ
