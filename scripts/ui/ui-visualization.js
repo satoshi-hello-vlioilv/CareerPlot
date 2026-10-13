@@ -404,32 +404,8 @@ class AppUICharts {
             
             if (employeeEvals.length === 0) return; // 評価がない場合はスキップ
             
-            // 新卒/中途の判定 (入社年齢で判定)
-            let isNewGraduate = false;
-            try {
-                const birthDate = new Date(employee.birthdate);
-                const joinDate = new Date(employee.joinDate);
-                
-                if (!isNaN(birthDate.getTime()) && !isNaN(joinDate.getTime())) {
-                    // 入社時の年齢を計算
-                    let joinAge = joinDate.getFullYear() - birthDate.getFullYear();
-                    
-                    // 誕生日がまだ来ていない場合は1引く
-                    const birthMonth = birthDate.getMonth();
-                    const birthDay = birthDate.getDate();
-                    const joinMonth = joinDate.getMonth();
-                    const joinDay = joinDate.getDate();
-                    
-                    if (joinMonth < birthMonth || (joinMonth === birthMonth && joinDay < birthDay)) {
-                        joinAge--;
-                    }
-                    
-                    // 19歳以下で入社の場合を新卒とみなす
-                    isNewGraduate = joinAge <= 19;
-                }
-            } catch (e) {
-                console.warn("Error calculating recruitment type:", e);
-            }
+            // 新卒/中途の判定（入社時年齢。基準は AppData で共通）
+            const isNewGraduate = this.appController.appData.isNewGraduate(employee);
             
             // 各グレードと役職についての初回到達時情報を追跡
             const gradeFirstReached = {};
@@ -627,7 +603,7 @@ class AppUICharts {
                 if (record.employee) {
                     html += `
                         <td class="age-cell">${record.age}歳</td>
-                        <td class="text-center">${record.employee.name}</td>
+                        <td class="text-center" data-employee-id="${record.employee.id}">${record.employee.name}</td>
                         <td class="text-center">${record.evaluation.year}年</td>
                         <td class="text-center">${record.isNewGraduate ? '新卒' : '中途'}</td>
                         <td class="text-center">
@@ -713,7 +689,7 @@ class AppUICharts {
             if (record.employee) {
                 html += `
                     <td class="age-cell">${record.age}歳</td>
-                    <td class="text-center">${record.employee.name}</td>
+                    <td class="text-center" data-employee-id="${record.employee.id}">${record.employee.name}</td>
                     <td class="text-center">${record.evaluation.year}年</td>
                     <td class="text-center">${record.isNewGraduate ? '新卒' : '中途'}</td>
                     <td class="text-center">
@@ -761,11 +737,13 @@ class AppUICharts {
         
         container.innerHTML = html;
         
-        // スタイルをグレードラベルに適用
-        document.querySelectorAll('.grade-label').forEach(label => {
-            // コントラスト調整
-            const bgHex = this.appUI.getComputedBgHex(label);
-            this.appUI.applyContrastColor(label, bgHex);
+        this.applyGradeContrast(container, '.grade-label');
+    }
+
+    /** グレード色を背景にした見出しへ、背景とのコントラストが高い文字色（白/黒）を当てる */
+    applyGradeContrast(root, selector) {
+        root.querySelectorAll(selector).forEach(el => {
+            this.appUI.applyContrastColor(el, this.appUI.getComputedBgHex(el));
         });
     }
 
@@ -926,6 +904,7 @@ class AppUICharts {
         selectedEmployees.forEach(employee => {
             const th = document.createElement('th');
             th.title = employee.name;
+            th.dataset.employeeId = employee.id;
             th.style.minWidth = '130px';
             th.style.padding = 'var(--spacing-xs) var(--spacing-sm)';
             th.style.textAlign = 'center';
@@ -3008,6 +2987,7 @@ class AppUICharts {
         html += `<td class="matrix-grand-total">${grandTotal}</td></tr>`;
         html += `</tbody></table></div></div>`;
         container.innerHTML = html;
+        this.applyGradeContrast(container, '.matrix-grade-label');
         
         document.querySelectorAll('.matrix-controls button[data-matrix-axis]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -3025,6 +3005,7 @@ class AppUICharts {
             const axisValue = cell.dataset.axisValue;
             if (grade && axisValue && matrixData[grade]?.[axisValue]?.employeeIds.length > 0) {
                 const employeeIds = matrixData[grade][axisValue].employeeIds;
+                cell.dataset.employeeIds = employeeIds.join(' '); // 社員検索で該当セルを強調するため
                 cell.addEventListener('mouseenter', (e) => this.handleMatrixCellMouseEnter(e, employeeIds, grade, axisValue, matrixAxisMode));
                 cell.addEventListener('mouseleave', () => this.hideMatrixTooltip());
             }
@@ -3156,6 +3137,7 @@ class AppUICharts {
             <p><strong>例：</strong> G3の行の「2年」列に「5」と表示されている場合、前のグレードからG3に昇格するのに2年かかったケースが5件あることを示します。</p>
         </div></div>`;
         container.innerHTML = html;
+        this.applyGradeContrast(container, '.matrix-grade-label');
         
         document.querySelectorAll('.matrix-controls button[data-matrix-axis]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -3173,6 +3155,7 @@ class AppUICharts {
             const years = cell.dataset.years;
              if (grade && years && matrixData[grade]?.[years]?.employeeIds.length > 0) {
                 const employeeIds = matrixData[grade][years].employeeIds;
+                cell.dataset.employeeIds = employeeIds.join(' '); // 社員検索で該当セルを強調するため
                 cell.addEventListener('mouseenter', (e) => this.handleMatrixCellMouseEnter(e, employeeIds, grade, years, 'grade-promotion'));
                 cell.addEventListener('mouseleave', () => this.hideMatrixTooltip());
             }
@@ -3504,30 +3487,15 @@ class AppUICharts {
         if (!employee || !employee.birthdate || !employee.joinDate) return null;
         
         try {
-            // 入社時の年齢を計算
-            const birthDate = new Date(employee.birthdate);
-            const joinDate = new Date(employee.joinDate);
-            
-            if (isNaN(birthDate.getTime()) || isNaN(joinDate.getTime())) return null;
-            
-            let joinAge = joinDate.getFullYear() - birthDate.getFullYear();
-            
-            // 誕生日がまだ来ていない場合は1引く
-            const birthMonth = birthDate.getMonth();
-            const birthDay = birthDate.getDate();
-            const joinMonth = joinDate.getMonth();
-            const joinDay = joinDate.getDate();
-            
-            if (joinMonth < birthMonth || (joinMonth === birthMonth && joinDay < birthDay)) {
-                joinAge--;
-            }
-            
+            const joinAge = this.appController.appData.getJoinAge(employee);
+            if (joinAge === null) return null;
+
             // バッジ生成
             const badge = document.createElement('div');
             badge.className = 'evaluation-card recruit-type-badge';
             
-            // 19歳以下で入社の場合は新卒、それ以外は中途
-            if (joinAge === 18 || joinAge === 19) {
+            // 新卒/中途の基準は AppData.isNewGraduate で共通
+            if (this.appController.appData.isNewGraduate(employee)) {
                 badge.classList.add('new-graduate');
                 badge.textContent = '新卒';
                 badge.title = `新卒入社 (${joinAge}歳入社)`;
@@ -3691,6 +3659,7 @@ class AppUICharts {
             // 名前ヘッダー
             const nameTh = document.createElement('th');
             nameTh.className = 'salary-th-name';
+            nameTh.dataset.employeeId = employee.id;
             nameTh.style.minWidth = nameWidth;
             nameTh.title = employee.name;
             
@@ -3713,6 +3682,7 @@ class AppUICharts {
             // 現在年齢/勤続 + バッジエリア ヘッダー
             const ageTh = document.createElement('th');
             ageTh.className = 'salary-th-age';
+            ageTh.dataset.employeeId = employee.id;
             
             const ageValSpan = document.createElement('div');
             ageValSpan.innerHTML = `<span>${axisType === 'age' ? '基準年齢:' : '基準勤続:'} ${currentAxisVal}</span>`;
@@ -3794,6 +3764,7 @@ class AppUICharts {
             selectedEmployees.forEach(employee => {
                 const cell = document.createElement('td');
                 cell.className = 'salary-td-cell';
+                cell.dataset.employeeId = employee.id;
                 
                 const evaluation = employee.evaluations.find(e =>
                     axisType === 'age' ? e.age === axisValue :

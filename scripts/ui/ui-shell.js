@@ -6,11 +6,13 @@
  *   既存の change 処理（filters の更新と再描画）への橋渡しとしてだけ使う
  * - 絞り込みサマリー: 適用中の条件をチップで常時表示し、その場で解除できる
  * - ビュー文脈: そのビューで意味を持たない設定は表示しない
- * - 表示項目: カード上の実際の見た目を見本として添える
+ * - 表示項目: カード上の実際の見た目を見本として添え、メニューのボタンには表示中の項目の見本を並べる
+ * - ヘッダー: 版数と更新履歴、バックアップ状態、社員検索、キーボード操作（Alt+数字でビュー切替）
  */
 class AppShell {
     /** ビューごとに意味を持つ設定（data-ctx の値） */
     static VIEW_CONTEXT = {
+        summary: [],
         chart: ['axis', 'sort', 'cards'],
         department: ['axis', 'sort', 'cards'],
         team: ['axis', 'sort', 'cards'],
@@ -71,14 +73,60 @@ class AppShell {
         this.rail.addEventListener('click', e => this.handleRailClick(e));
         document.addEventListener('mousedown', e => {
             if (this.openSection && !this.openSection.contains(e.target)) this.closePanel();
+            this.popovers.forEach(p => { if (p.isOpen() && !p.contains(e.target)) p.close(); });
         });
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && this.openSection) this.closePanel();
-        });
+        document.addEventListener('keydown', e => this.handleKeydown(e));
         this.summary.addEventListener('click', e => this.handleSummaryClick(e));
         this.addCardSamples();
+        this.popovers = [this.initDisplayMenu(), this.initVersion()];
+        this.initViewShortcuts();
+        this.initBackup();
+        this.search = new EmployeeSearch(this.app);
+        this.search.init();
         this.applyViewContext(this.app.displayOptions.currentView);
         this.refresh();
+    }
+
+    /** Esc は開いている層を 1 つだけ閉じる。Alt+数字でビューを切り替える */
+    handleKeydown(e) {
+        if (e.key === 'Escape') {
+            const open = this.popovers.find(p => p.isOpen());
+            if (open) open.close();
+            else if (this.openSection) this.closePanel();
+            return;
+        }
+        if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.key)) {
+            const tab = document.querySelectorAll('.tabs-navigation .tab-btn')[Number(e.key) - 1];
+            if (tab) {
+                e.preventDefault();
+                tab.click();
+            }
+        }
+    }
+
+    initViewShortcuts() {
+        document.querySelectorAll('.tabs-navigation .tab-btn').forEach((tab, i) => {
+            tab.title = `${tab.textContent.trim()}（Alt+${i + 1}）`;
+            tab.setAttribute('aria-keyshortcuts', `Alt+${i + 1}`);
+        });
+    }
+
+    /**
+     * ボタンで開閉するポップオーバーの共通部品（外側クリック・Esc で閉じる処理は init で一括）
+     * @returns {{contains: Function, isOpen: Function, close: Function}}
+     */
+    createPopover(button, panel, onOpen = null) {
+        const setOpen = open => {
+            panel.hidden = !open;
+            button.setAttribute('aria-expanded', String(open));
+            if (open) onOpen?.();
+        };
+        button.addEventListener('click', () => setOpen(panel.hidden));
+        return {
+            contains: target => button.contains(target) || panel.contains(target),
+            isOpen: () => !panel.hidden,
+            close: () => setOpen(false)
+        };
     }
 
     // ---------------------------------------------------------------
@@ -159,12 +207,16 @@ class AppShell {
         const isAll = selectedCount === options.length;
         const keyword = this.searchText.trim().toLowerCase();
 
+        // 人数の比率バー: 数字を読まなくても分布の偏りが分かるように行の背景に敷く
+        const maxCount = counts ? Math.max(1, ...options.map(o => counts.get(o.value) || 0)) : 0;
         const rows = options.map(o => {
             const hidden = keyword && !o.text.toLowerCase().includes(keyword);
-            const count = counts ? `<span class="fp-count">${counts.get(o.value) || 0}</span>` : '';
+            const n = counts ? counts.get(o.value) || 0 : 0;
+            const count = counts ? `<span class="fp-count">${n}</span>` : '';
+            const bar = counts ? ` style="--w:${Math.round(n / maxCount * 100)}%"` : '';
             const only = isGrid ? '' : '<button type="button" class="fp-only" title="この項目だけを選択">これだけ</button>';
             const text = config.label ? config.label(o.text) : o.text;
-            return `<label class="fp-option${selected.has(o.value) ? ' is-on' : ''}"${hidden ? ' hidden' : ''} data-value="${this.escape(o.value)}">
+            return `<label class="fp-option${selected.has(o.value) ? ' is-on' : ''}${counts ? ' has-bar' : ''}"${hidden ? ' hidden' : ''}${bar} data-value="${this.escape(o.value)}">
                         <input type="checkbox"${selected.has(o.value) ? ' checked' : ''}><span class="fp-text">${this.escape(text)}</span>${count}${only}
                     </label>`;
         }).join('');
@@ -245,6 +297,11 @@ class AppShell {
     refresh() {
         this.renderFilterSummary();
         this.updateEmployeeBadge();
+    }
+
+    /** ビューの描画が終わるたびに呼ばれる */
+    afterRender() {
+        this.search?.apply();
     }
 
     getActiveConditions() {
@@ -369,6 +426,90 @@ class AppShell {
         el.textContent = spec.text;
         Object.entries(spec.attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
         return el;
+    }
+
+    // ---------------------------------------------------------------
+    // 表示項目メニュー
+    // ---------------------------------------------------------------
+
+    initDisplayMenu() {
+        const button = document.getElementById('displayMenuBtn');
+        const panel = document.getElementById('displayMenuPanel');
+        panel.addEventListener('change', () => this.updateDisplayMenuSamples());
+        this.updateDisplayMenuSamples();
+        return this.createPopover(button, panel);
+    }
+
+    /** ボタンに、いまカードに出している項目の見本を並べる（開かなくても状態が分かる） */
+    updateDisplayMenuSamples() {
+        const host = document.getElementById('displayMenuSamples');
+        const names = [];
+        host.replaceChildren();
+        document.querySelectorAll('#displayMenuPanel .checkbox-item:not(.option-sub)').forEach(item => {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            if (!checkbox?.checked || item.style.display === 'none') return;
+            const label = item.querySelector('label');
+            const sample = label?.querySelector('.option-sample');
+            names.push(Array.from(label.childNodes).filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join('').trim());
+            if (sample) host.appendChild(sample.cloneNode(true));
+        });
+        document.getElementById('displayMenuBtn').title = `カードに表示する項目を選ぶ\n表示中: ${names.join('・') || 'なし'}`;
+    }
+
+    // ---------------------------------------------------------------
+    // 版数と更新履歴
+    // ---------------------------------------------------------------
+
+    initVersion() {
+        const button = document.getElementById('appVersionBtn');
+        button.textContent = `v${APP_VERSION}`;
+        const panel = document.createElement('div');
+        panel.className = 'app-popover version-popover';
+        panel.hidden = true;
+        panel.innerHTML = `<h4>更新履歴</h4>` + APP_CHANGELOG.map(entry => `
+            <section>
+                <b>v${this.escape(entry.version)}</b>${entry.date ? `<span>${this.escape(entry.date)}</span>` : ''}
+                <ul>${entry.items.map(item => `<li>${this.escape(item)}</li>`).join('')}</ul>
+            </section>`).join('');
+        // ヘッダーの重なり順に閉じ込められないよう body に置き、開くときにボタンの下へ配置する
+        document.body.appendChild(panel);
+        return this.createPopover(button, panel, () => {
+            const rect = button.getBoundingClientRect();
+            panel.style.left = `${rect.left}px`;
+            panel.style.top = `${rect.bottom + 8}px`;
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // バックアップ（データはこのブラウザにのみ保存されるため、書き出しを促す）
+    // ---------------------------------------------------------------
+
+    initBackup() {
+        this.backupButton = document.getElementById('backupBtn');
+        this.backupButton.addEventListener('click', async () => {
+            if (await this.app.appData.exportData('all')) {
+                this.app.appUI.showNotification('success', 'バックアップ（全データの ZIP）を保存しました');
+            }
+        });
+        document.addEventListener('careerplot:backup', e => {
+            this.app.uiState.lastBackupAt = e.detail.at;
+            this.updateBackupStatus();
+        });
+        document.addEventListener('careerplot:datachange', () => this.updateBackupStatus());
+        this.updateBackupStatus();
+    }
+
+    updateBackupStatus() {
+        const last = this.app.uiState.lastBackupAt;
+        const updated = this.app.appData.data.metadata?.lastUpdated;
+        const hasData = this.app.appData.getEmployees().length > 0;
+        const pending = hasData && (!last || (updated && updated > last));
+        const format = iso => new Date(iso).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const state = !last
+            ? 'バックアップ未実施（データはこのブラウザにのみ保存されています）'
+            : `最終バックアップ: ${format(last)}${pending ? '（その後に変更あり）' : '（最新）'}`;
+        this.backupButton.classList.toggle('has-alert', pending);
+        this.backupButton.title = `バックアップ — 全データを ZIP で書き出す\n${state}`;
     }
 
     escape(value) {

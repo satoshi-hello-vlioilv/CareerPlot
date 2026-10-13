@@ -238,6 +238,8 @@ class AppData {
                 localStorage.setItem(this.STORAGE_KEY, dataString);
                 localStorage.setItem('hrApp_grades', JSON.stringify(this.data.grades));
             }
+            // 画面側（バックアップ状態の表示など）へ変更を知らせる
+            document.dispatchEvent(new CustomEvent('careerplot:datachange'));
         } catch (e) {
              console.error("Error saving data:", e);
              alert(`データの保存中にエラーが発生しました:\n${e.message}\n大容量の顔写真データが制限を超えている可能性があります。`);
@@ -678,6 +680,11 @@ class AppData {
             
             // URL オブジェクトの解放（保存処理が始まる前に解放するとファイル名や内容が欠けるため遅延させる）
             setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+            // 全データの書き出しはバックアップとして記録する（ヘッダーのバックアップ状態に反映）
+            if (exportMode === 'all') {
+                document.dispatchEvent(new CustomEvent('careerplot:backup', { detail: { at: now.toISOString() } }));
+            }
             
             return true;
         } catch (e) {
@@ -1429,6 +1436,25 @@ class AppData {
             };
         }
         return null;
+    }
+
+    /** 新卒とみなす入社時年齢の上限（カードの新卒/中途バッジ・絞り込み・分析で共通） */
+    static NEW_GRADUATE_MAX_JOIN_AGE = 19;
+
+    /** 入社時の年齢（生年月日・入社日が不正なら null） */
+    getJoinAge(employee) {
+        const birth = new Date(employee?.birthdate);
+        const join = new Date(employee?.joinDate);
+        if (isNaN(birth.getTime()) || isNaN(join.getTime())) return null;
+        let age = join.getFullYear() - birth.getFullYear();
+        if (join.getMonth() < birth.getMonth() || (join.getMonth() === birth.getMonth() && join.getDate() < birth.getDate())) age--;
+        return age;
+    }
+
+    /** 新卒採用か（判定できない場合は false = 中途扱い） */
+    isNewGraduate(employee) {
+        const age = this.getJoinAge(employee);
+        return age !== null && age <= AppData.NEW_GRADUATE_MAX_JOIN_AGE;
     }
 
     getEmployeeEvaluations(employeeId) {

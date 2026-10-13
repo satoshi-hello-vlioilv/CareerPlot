@@ -40,7 +40,7 @@ class AppController {
         this.displayOptions = {
             chartType: 'grade',
             sortOrder: 'desc',
-            currentView: 'department',
+            currentView: 'summary',
             showPhoto: true,
             showGrade: true,
             showYearlyEval: true,
@@ -62,10 +62,14 @@ class AppController {
             showStarChartClassification: true,
             starChartType: 'qualification'
         };
+        // 前回の見せ方（ビュー・表示項目・軸）を復元する
+        this.uiState = new UiStateStore();
+        this.uiState.restoreViewOptions(this.displayOptions);
 
         this.certificationManager = new CertificationManager(this);
         this.settingsManager = new SettingsManager(this);
         this.exportManager = new ExportManager(this);
+        this.summaryView = new SummaryView(this);
     }
 
     // 非同期初期化
@@ -90,6 +94,8 @@ class AppController {
         // 3. UI構築とイベントリスナーの登録（必ずデータがある状態で行う）
         this.initializeUI();
         this.setupEventListeners();
+        // イベント登録時に select を複製し直すため、選択値は登録後に反映する（複製では選択状態が引き継がれない）
+        this.syncSelectsWithDisplayOptions();
         this.certificationManager.setupEventListeners();
 
         // 4. 初期の表示状態を構築
@@ -112,25 +118,12 @@ class AppController {
             });
         }
 
-        document.querySelectorAll('.tabs-navigation .tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.getAttribute('data-view') === 'department') {
-                btn.classList.add('active');
-            }
-        });
-        
-        const chartTypeSelect = document.getElementById('chartTypeSelect');
-        if (chartTypeSelect) chartTypeSelect.value = this.displayOptions.chartType;
-        
-        this.appUI.toggleAgeRangeSliderVisibility(false);
-        this.appUI.toggleTenureRangeSliderVisibility(false);
-
-        // 画面骨格（レール・絞り込みサマリー・ビュー文脈）
+        // 画面骨格（ヘッダー・レール・絞り込みサマリー・ビュー文脈・社員検索）
         this.shell = new AppShell(this);
         this.shell.init();
-        this.toggleEmployeeSelectVisibility(this.displayOptions.currentView === 'chart');
-        
-        this.refreshData();
+
+        this.refreshEmployeeSelectList();
+        this.changeView(this.displayOptions.currentView);
     }
 
     // CSVデータのロード
@@ -229,22 +222,14 @@ class AppController {
         this.appUI.initializeMenu();
         this.appUI.initializeModals();
 
-        // 表示オプション
+        // 表示オプション（チェックボックスの id は displayOptions のキーと同じ）
         document.getElementById('chartTypeSelect').value = this.displayOptions.chartType;
         document.getElementById('sortOrderSelect').value = this.displayOptions.sortOrder;
-        const showPhotoElem = document.getElementById('showPhoto');
-        if (showPhotoElem) showPhotoElem.checked = this.displayOptions.showPhoto;
-        document.getElementById('showGrade').checked = this.displayOptions.showGrade;
-        document.getElementById('showYearlyEval').checked = this.displayOptions.showYearlyEval;
-        document.getElementById('showPosition').checked = this.displayOptions.showPosition;
-        document.getElementById('showDepartmentBadge').checked = this.displayOptions.showDepartmentBadge;
-        document.getElementById('showGradeChange').checked = this.displayOptions.showGradeChange;
-        document.getElementById('showYearlyEvalChange').checked = this.displayOptions.showYearlyEvalChange;
-        document.getElementById('showTeam').checked = this.displayOptions.showTeam;
-        document.getElementById('showAge').checked = this.displayOptions.showAge; // 年齢バッジ
-        document.getElementById('showTenure').checked = this.displayOptions.showTenure; // 勤続年数バッジ
-        document.getElementById('showFlagIcon').checked = this.displayOptions.showFlagIcon;
-        document.getElementById('showRecruitType').checked = this.displayOptions.showRecruitType; // 新卒/中途バッジ
+        document.getElementById('starChartTypeSelect').value = this.displayOptions.starChartType;
+        Object.entries(this.displayOptions).forEach(([key, value]) => {
+            const checkbox = document.getElementById(key);
+            if (typeof value === 'boolean' && checkbox?.type === 'checkbox') checkbox.checked = value;
+        });
         
         // グレード軸が選択された場合、年齢と勤続年数スライダーを非表示
         this.appUI.toggleAgeRangeSliderVisibility(this.displayOptions.chartType === 'age');
@@ -265,12 +250,6 @@ class AppController {
             defaultSortOrderElem.value = this.appData.getSettings().defaultSortOrder;
         }
         
-        // 契約形態表示オプションの初期化
-        const showContractTypeCheckbox = document.getElementById('showContractType');
-        if (showContractTypeCheckbox) {
-            showContractTypeCheckbox.checked = this.displayOptions.showContractType;
-        }
-
         // フィルターリストボックスの初期化
         this.updateAllFilters();
 
@@ -279,6 +258,14 @@ class AppController {
 
         // 設定モーダルのグレード色表示にコントラストを適用
         this.appUI.applyContrastToSettingsGradeColors();
+    }
+
+    syncSelectsWithDisplayOptions() {
+        const selects = { chartTypeSelect: 'chartType', sortOrderSelect: 'sortOrder', starChartTypeSelect: 'starChartType' };
+        Object.entries(selects).forEach(([id, key]) => {
+            const select = document.getElementById(id);
+            if (select) select.value = this.displayOptions[key];
+        });
     }
 
     // グレード変化チェックボックスの表示/非表示を切り替える
@@ -1062,11 +1049,7 @@ class AppController {
         document.querySelectorAll('.tabs-navigation .tab-btn').forEach(btn => {
             const clone = btn.cloneNode(true);
             btn.parentNode.replaceChild(clone, btn);
-            clone.addEventListener('click', () => {
-                document.querySelectorAll('.tabs-navigation .tab-btn').forEach(b => b.classList.remove('active'));
-                clone.classList.add('active'); 
-                this.changeView(clone.getAttribute('data-view'));
-            });
+            clone.addEventListener('click', () => this.changeView(clone.getAttribute('data-view')));
         });
 
         // モーダル内タブ
@@ -1374,27 +1357,7 @@ class AppController {
 
             // 新卒/中途フィルター
             if (recruitTypes?.size > 0 && recruitTypes.size < 2) { // どちらか一方のみ選択された場合
-                let isNewGraduate = false;
-                try {
-                    if (employee.birthdate && employee.joinDate) {
-                        const birthDate = new Date(employee.birthdate);
-                        const joinDate = new Date(employee.joinDate);
-                        
-                        if (!isNaN(birthDate.getTime()) && !isNaN(joinDate.getTime())) {
-                            let joinAge = joinDate.getFullYear() - birthDate.getFullYear();
-                            const birthMonth = birthDate.getMonth();
-                            const birthDay = birthDate.getDate();
-                            const joinMonth = joinDate.getMonth();
-                            const joinDay = joinDate.getDate();
-                            if (joinMonth < birthMonth || (joinMonth === birthMonth && joinDay < birthDay)) {
-                                joinAge--;
-                            }
-                            isNewGraduate = joinAge <= 22;
-                        }
-                    }
-                } catch (e) {
-                    console.warn(`Error calculating recruit type for employee ${employee.id}:`, e);
-                }
+                const isNewGraduate = this.appData.isNewGraduate(employee);
                 
                 const matchesFilter = 
                     (recruitTypes.has('new-graduate') && isNewGraduate) || 
@@ -1537,6 +1500,7 @@ class AppController {
         if (yearFilter.size === 0 && currentView !== 'star-chart') { // 星取表は年度フィルター無視
             const emptyMessage = `<div class="empty-chart"><i class="fas fa-filter"></i><h3>表示対象がありません</h3><p>年度フィルターを選択してください。少なくとも1つの年度を選択する必要があります。</p></div>`;
             this.appUI.renderEmptyChart(document.getElementById('chartContainer'), emptyMessage);
+            this.afterRefreshChart();
             return;
         }
 
@@ -1617,14 +1581,28 @@ class AppController {
                     this.appUI.renderEmptyChart(document.getElementById('chartContainer'), '<div class="empty-chart"><i class="fas fa-filter"></i><h3>表示対象社員がいません</h3><p>フィルター条件を確認してください。</p></div>');
                 }
                 break;
+            case 'summary':
+                this.summaryView.render(document.getElementById('chartContainer'), employeesForAggregateViews, yearFilter);
+                break;
             default:
                 this.appUI.renderEmptyChart(document.getElementById('chartContainer'));
         }
+        this.afterRefreshChart();
+    }
+
+    /** 描画後の共通処理: 社員検索の強調を付け直し、見せ方を保存する */
+    afterRefreshChart() {
+        this.shell?.afterRender();
+        this.uiState.saveViewOptions(this.displayOptions);
     }
 
     // ビュー切り替え
     changeView(view) {
+        if (!AppShell.VIEW_CONTEXT[view]) view = 'summary'; // 保存値が古い・不正な場合
         this.displayOptions.currentView = view;
+        document.querySelectorAll('.tabs-navigation .tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
         this.appUI.toggleToolbarOptionsForView(view);
         this.shell?.applyViewContext(view);
         

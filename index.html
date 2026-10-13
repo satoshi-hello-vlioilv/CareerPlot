@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人事評定視覚化アプリケーション</title>
+    <title>CareerPlot - 人事評定視覚化</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,18 +14,38 @@
     <link rel="stylesheet" href="styles/certification.css">
     <link rel="stylesheet" href="styles/setting-all.css">
     <link rel="stylesheet" href="styles/shell.css">
+    <link rel="stylesheet" href="styles/summary.css">
     <link rel="stylesheet" href="styles/print.css">
 </head>
 <body>
-    <!-- ヘッダー: アプリ名と、どのビューからも使う操作 -->
-    <header>
-        <h1><i class="fas fa-chart-line"></i> 人事評定視覚化アプリ</h1>
-        <div class="header-controls">
-            <button id="addEvaluationBtn" class="btn-action" title="評価を追加"><i class="fas fa-star-half-alt"></i><span>評価を追加</span></button>
-            <button id="manageEmployeesBtn" class="btn-action" title="社員を追加"><i class="fas fa-user-plus"></i><span>社員を追加</span></button>
-            <button id="settingsBtn" class="btn-action" title="統合管理（マスタ・社員・データ入出力）"><i class="fas fa-cog"></i><span>管理</span></button>
-            <button id="exportImageBtn" class="btn-action" title="表示中の画面を画像で保存"><i class="fas fa-camera"></i><span>画像</span></button>
-            <button id="printBtn" class="btn-action" title="印刷"><i class="fas fa-print"></i><span>印刷</span></button>
+    <!-- ヘッダー: アプリ名・ビュー切替・社員検索・どのビューからも使う操作 -->
+    <header class="app-header">
+        <h1 class="app-brand" title="人事評定視覚化アプリ"><i class="fas fa-chart-line"></i><span>CareerPlot</span><button type="button" class="app-version" id="appVersionBtn" title="更新履歴を見る"></button></h1>
+        <nav class="tabs-navigation" role="tablist" aria-label="ビュー切替">
+            <button class="tab-btn" data-view="summary"><i class="fas fa-gauge-high"></i> サマリー</button>
+            <button class="tab-btn" data-view="department"><i class="fas fa-building"></i> 部署別配置</button>
+            <button class="tab-btn" data-view="team"><i class="fas fa-users"></i> 班別配置</button>
+            <button class="tab-btn" data-view="chart"><i class="fas fa-chart-line"></i> 評価チャート</button>
+            <button class="tab-btn" data-view="salary-comparison"><i class="fas fa-search-dollar"></i> 昇給分析</button>
+            <button class="tab-btn" data-view="star-chart"><i class="fas fa-th-list"></i> 星取表</button>
+            <button class="tab-btn" data-view="matrix"><i class="fas fa-th"></i> マトリクス分布</button>
+            <button class="tab-btn" data-view="career-path"><i class="fas fa-route"></i> キャリアパス分析</button>
+        </nav>
+        <div class="header-tools">
+            <div class="app-search" id="appSearch">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="text" id="employeeSearchInput" placeholder="社員を探す" autocomplete="off" aria-label="社員を探す（氏名・ふりがな・社員番号）">
+                <span class="app-search-result" id="employeeSearchResult" aria-live="polite"></span>
+                <kbd class="app-search-key" title="/ キーで検索欄へ移動">/</kbd>
+            </div>
+            <div class="header-controls">
+                <button id="addEvaluationBtn" class="btn-action" title="評価を追加"><i class="fas fa-star-half-alt"></i><span>評価を追加</span></button>
+                <button id="manageEmployeesBtn" class="btn-action" title="社員を追加"><i class="fas fa-user-plus"></i><span>社員を追加</span></button>
+                <button id="backupBtn" class="btn-action is-icon" title="バックアップ（データの書き出し）"><i class="fas fa-shield-halved"></i><span>バックアップ</span></button>
+                <button id="settingsBtn" class="btn-action is-icon" title="統合管理（マスタ・社員・データ入出力）"><i class="fas fa-cog"></i><span>管理</span></button>
+                <button id="exportImageBtn" class="btn-action is-icon" title="表示中の画面を画像で保存"><i class="fas fa-camera"></i><span>画像</span></button>
+                <button id="printBtn" class="btn-action is-icon" title="印刷"><i class="fas fa-print"></i><span>印刷</span></button>
+            </div>
         </div>
     </header>
 
@@ -150,17 +171,9 @@
         </nav>
         <!-- メインコンテンツ -->
         <main class="content">
-            <!-- ビュー切替と、そのビューの見せ方の設定（data-ctx: ビューに応じて表示） -->
+            <!-- 文脈バー: 適用中の絞り込み条件（左）と、そのビューの見せ方の設定（右・data-ctx: ビューに応じて表示） -->
             <div class="viewbar">
-                <div class="tabs-navigation" role="tablist">
-                    <button class="tab-btn" data-view="department"><i class="fas fa-building"></i> 部署別配置</button>
-                    <button class="tab-btn" data-view="team"><i class="fas fa-users"></i> 班別配置</button>
-                    <button class="tab-btn active" data-view="chart"><i class="fas fa-chart-line"></i> 評価チャート</button>
-                    <button class="tab-btn" data-view="salary-comparison"><i class="fas fa-search-dollar"></i> 昇給分析</button>
-                    <button class="tab-btn" data-view="star-chart"><i class="fas fa-th-list"></i> 星取表</button>
-                    <button class="tab-btn" data-view="matrix"><i class="fas fa-th"></i> マトリクス分布</button>
-                    <button class="tab-btn" data-view="career-path"><i class="fas fa-route"></i> キャリアパス分析</button>
-                </div>
+                <div class="filter-summary" id="filterSummary" aria-live="polite"></div>
                 <div class="view-options">
                     <div class="toolbar-section" data-ctx="axis">
                         <label for="chartTypeSelect">表示形式</label>
@@ -217,77 +230,80 @@
                             <label for="showStarChartClassification" title="区分を項目名に添えて表示（作業認定のみ）">区分</label>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- 適用中の絞り込み条件（JSで描画） -->
-            <div class="filter-summary" id="filterSummary" aria-live="polite"></div>
-
-            <!-- カードに表示する項目（見本はJSで付与） -->
-            <div class="toolbar display-options" data-ctx="cards">
-                <div class="option-group">
-                    <span class="option-group-label">評価</span>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showGrade" checked>
-                        <label for="showGrade" title="グレードを表示">グレード</label>
-                    </div>
-                    <div class="checkbox-item compact option-sub">
-                        <input type="checkbox" id="showGradeChange" checked>
-                        <label for="showGradeChange" title="前年からのグレード変化（↑↓・維持年数）を表示">変化</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showYearlyEval" checked>
-                        <label for="showYearlyEval" title="年度評価を表示">年度評価</label>
-                    </div>
-                    <div class="checkbox-item compact option-sub">
-                        <input type="checkbox" id="showYearlyEvalChange" checked>
-                        <label for="showYearlyEvalChange" title="前年からの年度評価の変化（↑↓・維持年数）を表示">変化</label>
-                    </div>
-                </div>
-                <div class="option-group">
-                    <span class="option-group-label">属性</span>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showPosition">
-                        <label for="showPosition" title="役職を表示">役職</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showDepartmentBadge" checked>
-                        <label for="showDepartmentBadge" title="部署を表示">部署</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showTeam">
-                        <label for="showTeam" title="所属班を表示">班</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showAge">
-                        <label for="showAge" title="年齢を表示">年齢</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showTenure">
-                        <label for="showTenure" title="勤続年数を表示">勤続</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showRecruitType">
-                        <label for="showRecruitType" title="新卒採用・中途採用の区分を表示">採用</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showContractType" checked>
-                        <label for="showContractType" title="契約形態を表示">契約</label>
-                    </div>
-                </div>
-                <div class="option-group">
-                    <span class="option-group-label">カード</span>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showPhoto" checked>
-                        <label for="showPhoto" title="顔写真（未登録は頭文字）を表示">写真</label>
-                    </div>
-                    <div class="checkbox-item compact">
-                        <input type="checkbox" id="showFlagIcon" checked>
-                        <label for="showFlagIcon" title="評価に付けたフラグを表示">フラグ</label>
-                    </div>
-                    <div class="checkbox-item compact salary-comparison-options" style="display: none;">
-                        <input type="checkbox" id="showFullName">
-                        <label for="showFullName" title="昇給分析で氏名をフルネームで表示">フルネーム</label>
+                    <!-- カードに表示する項目: ボタンに表示中の項目の見本を並べ、クリックで一覧（見本はJSで付与） -->
+                    <div class="display-menu" data-ctx="cards">
+                        <button type="button" class="display-menu-btn" id="displayMenuBtn" aria-haspopup="true" aria-expanded="false" title="カードに表示する項目を選ぶ">
+                            <i class="fas fa-id-card"></i><span>表示項目</span><span class="display-menu-samples" id="displayMenuSamples" aria-hidden="true"></span><i class="fas fa-chevron-down display-menu-caret"></i>
+                        </button>
+                        <div class="display-menu-panel" id="displayMenuPanel" hidden>
+                            <div class="toolbar display-options">
+                                <div class="option-group">
+                                    <span class="option-group-label">評価</span>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showGrade" checked>
+                                        <label for="showGrade" title="グレードを表示">グレード</label>
+                                    </div>
+                                    <div class="checkbox-item compact option-sub">
+                                        <input type="checkbox" id="showGradeChange" checked>
+                                        <label for="showGradeChange" title="前年からのグレード変化（↑↓・維持年数）を表示">変化</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showYearlyEval" checked>
+                                        <label for="showYearlyEval" title="年度評価を表示">年度評価</label>
+                                    </div>
+                                    <div class="checkbox-item compact option-sub">
+                                        <input type="checkbox" id="showYearlyEvalChange" checked>
+                                        <label for="showYearlyEvalChange" title="前年からの年度評価の変化（↑↓・維持年数）を表示">変化</label>
+                                    </div>
+                                </div>
+                                <div class="option-group">
+                                    <span class="option-group-label">属性</span>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showPosition">
+                                        <label for="showPosition" title="役職を表示">役職</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showDepartmentBadge" checked>
+                                        <label for="showDepartmentBadge" title="部署を表示">部署</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showTeam">
+                                        <label for="showTeam" title="所属班を表示">班</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showAge">
+                                        <label for="showAge" title="年齢を表示">年齢</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showTenure">
+                                        <label for="showTenure" title="勤続年数を表示">勤続</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showRecruitType">
+                                        <label for="showRecruitType" title="新卒採用・中途採用の区分を表示">採用</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showContractType" checked>
+                                        <label for="showContractType" title="契約形態を表示">契約</label>
+                                    </div>
+                                </div>
+                                <div class="option-group">
+                                    <span class="option-group-label">カード</span>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showPhoto" checked>
+                                        <label for="showPhoto" title="顔写真（未登録は頭文字）を表示">写真</label>
+                                    </div>
+                                    <div class="checkbox-item compact">
+                                        <input type="checkbox" id="showFlagIcon" checked>
+                                        <label for="showFlagIcon" title="評価に付けたフラグを表示">フラグ</label>
+                                    </div>
+                                    <div class="checkbox-item compact salary-comparison-options" style="display: none;">
+                                        <input type="checkbox" id="showFullName">
+                                        <label for="showFullName" title="昇給分析で氏名をフルネームで表示">フルネーム</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1592,8 +1608,12 @@
     <script src="scripts/ui/ui-forms.js"></script>
     <script src="scripts/ui/ui-manager.js"></script>
     <script src="scripts/ui/ui-shell.js"></script>
+    <script src="scripts/ui/ui-search.js"></script>
+    <script src="scripts/ui/ui-summary.js"></script>
 
     <!-- コアコンポーネント -->
+    <script src="scripts/core/app-version.js"></script>
+    <script src="scripts/core/ui-state.js"></script>
     <script src="scripts/core/app-settings-core.js"></script>
     <script src="scripts/core/zip-archive.js"></script>
     <script src="scripts/core/data.js"></script>

@@ -1,11 +1,13 @@
 /*
  * shell.css
- * 画面骨格: 左レール（絞り込み・表示社員）、ビューバー、絞り込みサマリー、表示項目
+ * 画面骨格: ヘッダー（ビュー切替・社員検索・操作）、左レール（絞り込み・表示社員）、
+ *           文脈バー（絞り込みサマリー + ビューの見せ方）、表示項目メニュー
  *
  * 色の意味づけ
- *   主色（ティール）: 選択中・現在地
+ *   主色（ティール）: 選択中・現在地（選択中のタブ・検索で見つけた社員）
  *   アンバー        : 絞り込みが掛かっている（一部選択）
- *   赤              : 何も選ばれていない（要注意）
+ *   赤              : 何も選ばれていない・要注意（未バックアップの変更など）
+ *   濃紺（ヘッダー）: アプリ全体に効く場所。ビュー内の設定（白い面）と区別する
  */
 
 :root {
@@ -19,6 +21,260 @@
     --state-none-border: #B55252;
     --state-none-text: #8C2F2F;
     --panel-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    --header-height: 48px;
+    --header-bg: #17344A;
+    --header-ink: #FFFFFF;
+    --header-ink-muted: rgba(255, 255, 255, 0.84);
+    --header-fill: rgba(255, 255, 255, 0.10);
+    --header-fill-hover: rgba(255, 255, 255, 0.18);
+    --header-line: rgba(255, 255, 255, 0.24);
+    --alert-dot: #E5534B;
+    --search-hit: var(--main-primary);
+}
+
+/* ============================================================
+   ヘッダー: アプリ名 | ビュー切替タブ | 社員検索・操作
+   ============================================================ */
+.app-header {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    height: var(--header-height);
+    padding: 0 12px 0 14px;
+    background: var(--header-bg);
+    color: var(--header-ink);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: var(--font-size-medium);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.app-brand > i {
+    font-size: 1.1em;
+}
+
+.app-version {
+    padding: 1px 8px;
+    border: 1px solid var(--header-line);
+    border-radius: 99px;
+    background: var(--header-fill);
+    color: var(--header-ink-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 16px;
+    cursor: pointer;
+}
+
+.app-version:hover {
+    background: var(--header-fill-hover);
+    color: var(--header-ink);
+}
+
+/* 紙タブ: 選択中のタブは下の面（文脈バー）と同じ色でつながり、現在地を示す */
+.app-header .tabs-navigation {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    margin-left: 10px;
+}
+
+.app-header .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: calc(var(--header-height) - 8px);
+    padding: 0 10px;
+    border: none;
+    border-radius: 9px 9px 0 0;
+    background: none;
+    color: var(--header-ink-muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.app-header .tab-btn i {
+    font-size: 12px;
+}
+
+.app-header .tab-btn:hover {
+    background: var(--header-fill);
+    color: var(--header-ink);
+}
+
+.app-header .tab-btn.active {
+    background: var(--base-background);
+    color: var(--main-primary-dark);
+    font-weight: 700;
+}
+
+.app-header .tab-btn:focus-visible,
+.app-header button:focus-visible {
+    outline: 2px solid #8FD3E3;
+    outline-offset: -2px;
+}
+
+.header-tools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+/* 社員検索: 見つけた社員を強調し、それ以外を薄くする（絞り込みではない） */
+.app-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 196px;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--header-line);
+    border-radius: 7px;
+    background: var(--header-fill);
+    color: var(--header-ink-muted);
+    font-size: 13px;
+    transition: width var(--transition-fast), background-color var(--transition-fast);
+}
+
+.app-search:focus-within,
+.app-search.has-query {
+    width: 232px;
+    background: var(--base-light);
+    border-color: var(--base-light);
+    color: var(--text-muted);
+}
+
+.app-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.app-search:focus-within input,
+.app-search.has-query input {
+    color: var(--text-color);
+}
+
+.app-search input::placeholder {
+    color: var(--header-ink-muted);
+}
+
+.app-search:focus-within input::placeholder {
+    color: var(--text-muted);
+}
+
+.app-search-result {
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.app-search-result.is-none {
+    color: var(--state-none-text);
+    font-weight: 600;
+}
+
+.app-search-key {
+    padding: 0 5px;
+    border: 1px solid var(--header-line);
+    border-radius: 4px;
+    font: 600 10.5px/16px inherit;
+    color: var(--header-ink-muted);
+}
+
+.app-search:focus-within .app-search-key,
+.app-search.has-query .app-search-key {
+    display: none;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.header-controls .btn-action {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    height: 30px;
+    padding: 0 11px;
+    border: none;
+    border-radius: 7px;
+    background: var(--header-fill);
+    color: var(--header-ink);
+    font-size: var(--font-size-small);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.header-controls .btn-action:hover {
+    background: var(--header-fill-hover);
+    color: var(--header-ink);
+    transform: none;
+}
+
+/* 二次操作はアイコンのみ（名称は title で示す） */
+.header-controls .btn-action.is-icon {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+}
+
+.header-controls .btn-action.is-icon span {
+    display: none;
+}
+
+/* 幅が足りない画面（フル HD・表示スケール 125% = 1536px など）では、
+   主操作もアイコンのみにし、タブのアイコンと表示項目の見本を省く */
+@media (max-width: 1640px) {
+    .header-controls .btn-action {
+        width: 32px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .header-controls .btn-action span {
+        display: none;
+    }
+
+    .app-header .tab-btn i {
+        display: none;
+    }
+
+    .display-menu-samples {
+        display: none;
+    }
+}
+
+/* 要注意の印（未バックアップの変更など） */
+.header-controls .btn-action.has-alert::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--alert-dot);
+    box-shadow: 0 0 0 2px var(--header-bg);
 }
 
 /* ============================================================
@@ -249,6 +505,21 @@
     display: none;
 }
 
+.fp-option.has-bar {
+    position: relative;
+    isolation: isolate;
+}
+
+.fp-option.has-bar::before {
+    content: '';
+    position: absolute;
+    inset: 2px auto 2px 0;
+    width: var(--w, 0);
+    border-radius: var(--border-radius-sm);
+    background-color: rgba(var(--main-primary-rgb), 0.10);
+    z-index: -1;
+}
+
 .fp-option:hover {
     background-color: var(--base-light-gray);
 }
@@ -302,60 +573,31 @@
 }
 
 /* ============================================================
-   メインエリア: ビューバー（タブ + ビューの設定）
+   文脈バー: 絞り込みサマリー（左）+ ビューの見せ方（右）
    ============================================================ */
 .content {
-    padding: 4px var(--spacing-md) var(--spacing-sm);
+    padding: 0 var(--spacing-md) var(--spacing-sm);
     overflow: hidden;
 }
 
 .viewbar {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+    align-items: center;
     gap: var(--spacing-md);
+    min-height: 42px;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
-.tabs-navigation {
-    display: flex;
-    align-items: stretch;
-    flex-wrap: nowrap;
-}
-
-.tab-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px 7px;
-    border: none;
-    border-bottom: 3px solid transparent;
-    background: none;
-    color: var(--text-muted);
-    font-size: var(--font-size-normal);
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color var(--transition-fast), background-color var(--transition-fast);
-}
-
-.tab-btn:hover {
-    color: var(--main-primary-dark);
-    background-color: var(--base-light-gray);
-}
-
-.tab-btn.active {
-    color: var(--main-primary-dark);
-    border-bottom-color: var(--main-primary);
-    font-weight: 700;
+.viewbar > .filter-summary {
+    flex: 1;
+    min-width: 0;
 }
 
 .view-options {
     display: flex;
     align-items: center;
     gap: var(--spacing-lg);
-    padding-bottom: 5px;
 }
 
 .view-options .toolbar-section label {
@@ -376,6 +618,7 @@
     gap: var(--spacing-sm);
     min-height: 32px;
     padding: 3px 2px;
+    overflow: hidden;
     font-size: var(--font-size-small);
     white-space: nowrap;
     flex-shrink: 0;
@@ -449,20 +692,68 @@
 }
 
 /* ============================================================
-   表示項目（カードに出す情報）
+   表示項目メニュー（カードに出す情報）
+   ボタンには表示中の項目の見本を並べ、開くと意味グループごとの一覧になる
    ============================================================ */
-.toolbar.display-options {
-    display: flex;
+.display-menu {
+    position: relative;
+}
+
+.display-menu-btn {
+    display: inline-flex;
     align-items: center;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-    padding: 4px 8px;
-    background-color: var(--base-light);
+    gap: 6px;
+    height: 30px;
+    padding: 0 8px 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--base-light);
+    color: var(--text-color);
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.display-menu-btn:hover,
+.display-menu-btn[aria-expanded="true"] {
+    border-color: var(--main-primary);
+}
+
+.display-menu-btn > i:first-child {
+    color: var(--main-primary-dark);
+}
+
+.display-menu-samples {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.display-menu-caret {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.display-menu-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 300;
+    padding: 10px 12px;
+    background: var(--base-light);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
+    box-shadow: var(--panel-shadow);
+}
+
+.display-menu-panel[hidden] {
+    display: none;
+}
+
+.toolbar.display-options {
+    display: grid;
+    gap: 8px;
     white-space: nowrap;
-    flex-shrink: 0;
-    overflow-x: auto;
 }
 
 .option-group {
@@ -472,11 +763,12 @@
 }
 
 .option-group + .option-group {
-    padding-left: var(--spacing-md);
-    border-left: 1px solid var(--border-color);
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
 }
 
 .option-group-label {
+    width: 3em;
     margin-right: 2px;
     font-size: 11.5px;
     font-weight: 700;
@@ -506,7 +798,8 @@
 }
 
 /* カードの見本（実物と同じクラスで描画し、表示時の見た目を示す） */
-.display-options .option-sample {
+.display-options .option-sample,
+.display-menu-samples .option-sample {
     margin: 0 !important;
     padding: 0 4px !important;
     min-width: 0 !important;
@@ -516,7 +809,8 @@
     pointer-events: none;
 }
 
-.display-options i.option-sample {
+.display-options i.option-sample,
+.display-menu-samples i.option-sample {
     padding: 0 !important;
     color: var(--text-muted);
     font-size: 11px !important;
@@ -548,4 +842,80 @@
    ============================================================ */
 .chart-container {
     margin-top: 0;
+}
+
+/* ============================================================
+   社員検索の強調（ui-search.js）
+   見つけた社員以外を薄くし、移動中の該当者に主色の枠を付ける
+   ============================================================ */
+.is-searching [data-employee-id]:not(.is-search-hit),
+.is-searching [data-employee-ids]:not(.is-search-hit) {
+    opacity: 0.25;
+}
+
+.is-searching .employee-card.is-search-hit,
+.is-searching [data-employee-ids].is-search-hit,
+.is-searching td[data-employee-id].is-search-hit:not(.star-chart-cell):not(.salary-td-cell) {
+    box-shadow: 0 0 0 2px var(--search-hit) !important;
+}
+
+.is-searching th.is-search-hit {
+    box-shadow: inset 0 -4px 0 #8FD3E3;
+}
+
+.is-search-current {
+    outline: 3px solid var(--search-hit) !important;
+    outline-offset: 2px;
+    position: relative;
+    z-index: 5;
+}
+
+th.is-search-current {
+    outline-color: #8FD3E3 !important;
+    outline-offset: -3px;
+}
+
+/* ============================================================
+   ヘッダーのポップオーバー（更新履歴）
+   ============================================================ */
+.app-popover {
+    position: fixed;
+    z-index: 1000;
+    width: 420px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 12px 16px;
+    background: var(--base-light);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--panel-shadow);
+    font-size: var(--font-size-small);
+    font-weight: 400;
+    white-space: normal;
+}
+
+.app-popover[hidden] {
+    display: none;
+}
+
+.version-popover h4 {
+    margin-bottom: 6px;
+    font-size: var(--font-size-normal);
+}
+
+.version-popover section + section {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.version-popover section > span {
+    margin-left: 8px;
+    color: var(--text-muted);
+}
+
+.version-popover ul {
+    margin: 4px 0 0 1.2em;
+    line-height: 1.6;
 }

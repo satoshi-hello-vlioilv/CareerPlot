@@ -60,7 +60,7 @@ class ExportManager {
         }
 
         // テーブル要素などを直接ターゲットにしてスクロール領域の影響を軽減
-        const chartContent = targetElement.querySelector('table') || targetElement.firstElementChild;
+        const chartContent = targetElement.querySelector('.summary-view, table') || targetElement.firstElementChild; // サマリーは複数の表・グラフを含むため全体を対象にする
         if (chartContent && !chartContent.classList.contains('empty-chart')) {
             targetElement = chartContent;
         }

@@ -547,7 +547,7 @@
 .age-cell {
     text-align: center;
     font-weight: bold;
-    color: var(--semantic-info);
+    color: var(--main-primary-dark); /* 白地で WCAG AA（--semantic-info は 3.3:1 で不足） */
 }
 
 .stat-cell {

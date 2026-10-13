@@ -513,8 +513,6 @@ td.team-chart-cell {
 .btn-action { background: none; border: none; color: var(--text-muted); border-radius: var(--border-radius-circle); width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; box-shadow: none; transition: all var(--transition-fast); cursor: pointer; }
 .btn-action i { font-size: 1em; }
 .btn-action:hover { background-color: var(--base-light-gray); color: var(--main-primary); transform: scale(1.05); }
-.header-controls .btn-action { background: rgba(0, 0, 0, 0.16); color: var(--text-on-primary); width: auto; height: 30px; padding: 0 var(--spacing-md); gap: var(--spacing-sm); border-radius: var(--border-radius-md); font-size: var(--font-size-small); white-space: nowrap; }
-.header-controls .btn-action:hover { background: rgba(0, 0, 0, 0.28); color: var(--text-on-primary); transform: none; }
 .btn-table-action { padding: 3px; font-size: 0.9em; line-height: 1; width: 24px; height: 24px; border-radius: var(--border-radius-circle); margin: 0 1px; border: 1px solid transparent; box-shadow: none; }
 .btn-table-action i { font-size: 1em; }
 .btn-table-action.edit { background-color: var(--main-primary-light); color: var(--text-color); border-color: var(--main-primary-light); }
@@ -807,6 +805,7 @@ textarea.form-input { height: auto; min-height: 60px; }
     align-items: center;
     justify-content: center;
     font-weight: 500;
+    color: #1E2328; /* 最も濃いセル（--semantic-info）上でも WCAG AA を満たす */
 }
 
 .matrix-total {
@@ -820,7 +819,7 @@ textarea.form-input { height: auto; min-height: 60px; }
 }
 
 .matrix-column-totals td:first-child {
-    background-color: var(--base-medium-gray);
+    background-color: var(--base-dark-gray); /* 白文字で WCAG AA（--base-medium-gray では 2.1:1） */
     color: var(--text-on-primary);
 }
 

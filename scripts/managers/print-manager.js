@@ -163,7 +163,7 @@ class PrintManager {
 
         try {
             // テーブル要素などを直接ターゲットにしてスクロール領域の影響を軽減
-            const chartContent = targetElement.querySelector('table') || targetElement.firstElementChild;
+            const chartContent = targetElement.querySelector('.summary-view, table') || targetElement.firstElementChild; // サマリーは複数の表・グラフを含むため全体を対象にする
             const elementToRender = (chartContent && !chartContent.classList.contains('empty-chart')) ? chartContent : targetElement;
 
             // html2canvas のオプション設定（高画質化・見切れ防止）

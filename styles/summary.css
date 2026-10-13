@@ -1,0 +1,469 @@
+/*
+ * summary.css
+ * サマリー（ダッシュボード）ビュー
+ *
+ * - 指標（KPI）は大きな数字 + 小さな単位 + 補足（中央値・前年差）の3段で、読む順に並べる
+ * - グレードはグレード色、新卒/中途は主色の濃淡、前年比は 上昇=青・維持=灰・下降=赤 とし、
+ *   カード上の矢印（↑ 青 / ↓ 赤）と同じ意味づけにそろえる
+ */
+
+:root {
+    --sm-up: #3F72AF;
+    --sm-same: #B8C0C8;
+    --sm-down: #B55252;
+    --sm-band: #9A7BB5;
+    --sm-new: var(--main-primary);
+    --sm-mid: #9CCBD8;
+    --sm-surface: var(--base-light);
+}
+
+.summary-view {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 100%;
+    padding: 12px;
+    background: var(--base-background);
+}
+
+.sm-grid {
+    display: grid;
+    gap: 10px;
+    align-items: start;
+}
+
+/* 段ごとにカードの高さをそろえる（段の最後のカードを伸ばす） */
+.sm-row-main,
+.sm-row-sub {
+    align-items: stretch;
+}
+
+.sm-row-main { grid-template-columns: 1fr 1.25fr 1fr; }
+.sm-row-sub { grid-template-columns: 1fr 1fr; }
+
+.sm-row-main > .sm-card,
+.sm-row-sub > .sm-card,
+.sm-row-main > .sm-stack > .sm-card:last-child {
+    flex: 1;
+}
+
+.sm-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* --- 指標 --- */
+.sm-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.sm-kpi {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--sm-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+}
+
+.sm-kpi-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: rgba(var(--main-primary-rgb), 0.10);
+    color: var(--main-primary-dark);
+    font-size: 16px;
+}
+
+.sm-kpi-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sm-kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.sm-kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-color);
+}
+
+.sm-kpi-value small {
+    margin-left: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.sm-kpi-sub {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sm-delta {
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- カード --- */
+.sm-card {
+    min-width: 0;
+    background: var(--sm-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+}
+
+.sm-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px 7px;
+    border-bottom: 1px solid var(--base-light-gray);
+}
+
+.sm-card-head > i {
+    color: var(--main-primary-dark);
+    font-size: 13px;
+}
+
+.sm-card-head h3 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.sm-card-note {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+.sm-card-body {
+    padding: 10px 14px 12px;
+}
+
+.sm-muted {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.sm-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+.sm-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sm-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.sm-sw-new { background: var(--sm-new); }
+.sm-sw-mid { background: var(--sm-mid); }
+.sm-sw-count { background: rgba(var(--main-primary-rgb), 0.22); }
+.sm-sw-grade { background: var(--main-primary-dark); height: 3px !important; }
+
+/* --- 横棒（グレード分布・部署別） --- */
+.sm-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sm-bar-row {
+    display: grid;
+    grid-template-columns: 38px 1fr 28px;
+    align-items: center;
+    gap: 8px;
+}
+
+.sm-grade-chip {
+    display: inline-block;
+    min-width: 32px;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: var(--chip);
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+.sm-bar-track {
+    position: relative;
+    display: block;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--base-light-gray);
+    overflow: hidden;
+}
+
+.sm-bar {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+}
+
+.sm-bar-plain {
+    background: rgba(var(--main-primary-rgb), 0.55);
+}
+
+.sm-bar-num {
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* --- 縦棒（年齢構成） --- */
+.sm-cols {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    height: 150px;
+}
+
+.sm-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-height: 0;
+}
+
+.sm-col-num {
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.sm-col-track {
+    display: flex;
+    flex-direction: column-reverse;
+    flex: 1;
+    width: 70%;
+    min-height: 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sm-col-new { background: var(--sm-new); border-radius: 0; }
+.sm-col-mid { background: var(--sm-mid); border-radius: 3px 3px 0 0; }
+
+.sm-col-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+/* --- 前年比の帯 --- */
+.sm-change + .sm-change {
+    margin-top: 12px;
+}
+
+.sm-change > b {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12.5px;
+}
+
+.sm-strip {
+    display: flex;
+    gap: 2px;
+    height: 16px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sm-seg-up { background: var(--sm-up); }
+.sm-seg-same { background: var(--sm-same); }
+.sm-seg-down { background: var(--sm-down); }
+.sm-seg-band { background: var(--sm-band); }
+
+.sm-change-nums {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sm-change-num {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sm-change-num i {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+}
+
+.sm-change-num b {
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.sm-num-up i { background: var(--sm-up); }
+.sm-num-same i { background: var(--sm-same); }
+.sm-num-down i { background: var(--sm-down); }
+.sm-num-band i { background: var(--sm-band); }
+
+/* --- 表 --- */
+.sm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.sm-table th,
+.sm-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--base-light-gray);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.sm-table th:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+.sm-table thead th {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.sm-td-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 120px;
+}
+
+.sm-td-bar .sm-bar-track {
+    flex: 1;
+}
+
+/* --- 推移グラフ（SVG は描画後に実寸で作る） --- */
+.sm-card-trend {
+    display: flex;
+    flex-direction: column;
+}
+
+.sm-card-trend .sm-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.sm-trend-host {
+    flex: 1;
+    min-height: 150px;
+}
+
+.sm-trend {
+    display: block;
+}
+
+.sm-trend-base { stroke: var(--border-color); }
+
+.sm-trend-bar { fill: rgba(var(--main-primary-rgb), 0.22); }
+.sm-trend-line { fill: none; stroke: var(--main-primary-dark); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.sm-trend-dot { fill: var(--base-light); stroke: var(--main-primary-dark); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.sm-axis { font-size: 11px; fill: var(--text-muted); }
+
+/* --- 確認が必要な社員 --- */
+.sm-att + .sm-att {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--base-light-gray);
+}
+
+.sm-att h4 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.sm-att h4 i {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.sm-att h4 b {
+    margin-left: auto;
+    min-width: 22px;
+    padding: 0 6px;
+    border-radius: 9px;
+    background: var(--base-light-gray);
+    font-size: 11.5px;
+    text-align: center;
+}
+
+.sm-people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.sm-person {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 99px;
+    background: var(--base-light);
+    color: var(--text-color);
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.sm-person:hover {
+    border-color: var(--main-primary);
+    background: rgba(var(--main-primary-rgb), 0.06);
+}
+
+.sm-person-note {
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.sm-more {
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}

@@ -152,40 +152,7 @@ body {
     background: var(--base-dark-gray);
 }
 
-/* ヘッダー */
-header {
-    background: var(--main-primary);
-    color: var(--text-on-primary);
-    padding: 0 var(--spacing-md);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: var(--box-shadow-md);
-    z-index: 100;
-    height: 44px;
-    flex-shrink: 0;
-}
-
-
-header h1 {
-    font-size: var(--font-size-medium);
-    margin: 0;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
-
-header h1 i {
-    margin-right: var(--spacing-sm);
-    font-size: 1.2em;
-}
-
-.header-controls {
-    display: flex;
-    gap: var(--spacing-xs);
-    align-items: center;
-}
+/* ヘッダー（アプリ名・ビュー切替・検索・操作）は shell.css */
 
 
 /* メインコンテンツエリア */
